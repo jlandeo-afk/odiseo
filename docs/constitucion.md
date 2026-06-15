@@ -11,9 +11,9 @@
 |-------|---------|
 | **Naming** | Dominio en español, patrones/clases/métodos en inglés, tablas inglés snake_case, tests español, commits inglés Conventional Commits, branches inglés kebab-case |
 | **Tipado estricto** | `declare(strict_types=1)` en todo PHP; `strict: true` en TypeScript nuevos |
-| **Linting** | PHPStan nivel max, Laravel Pint (PSR-12), ESLint + Prettier frontend |
+| **Linting** | PHPStan nivel 5, ESLint + Prettier frontend |
 | **Commits** | `type(scope): description` — `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf` |
-| **Branches** | `main` (prod), `staging`, `develop`, `feat/*`, `fix/*`, `refactor/*` |
+| **Branches** | `main` (prod), `testing`, `develop`, `feat/*`, `fix/*`, `refactor/*` |
 | **Evolución legacy** | Código nuevo en `src/`; legacy (`app/`) solo se modifica si es estrictamente necesario |
 
 ---
@@ -111,7 +111,7 @@ Los Use Cases **NO** gestionan transacciones. Se usa `TransactionalUseCase` como
 ### PHP Estricto
 
 - `declare(strict_types=1)` en TODO archivo `.php`
-- PHPStan nivel máximo (`phpstan.neon` + `phpstan.src.neon`)
+- PHPStan nivel 5 (`phpstan.neon` + `phpstan.src.neon`)
 
 > 📎 ADR-001 a ADR-010
 
@@ -172,8 +172,10 @@ src/modules/{modulo}/
 ### Versión y Conexiones
 
 - **PostgreSQL 16** obligatorio (LTS hasta 2028-11-09)
-- **Dos conexiones**: `pgsql_master` (escritura) + `pgsql_stand_by` (lectura)
-- ORM: Laravel Eloquent
+- **Dos conexiones directas**: `pgsql_master` (escritura) + `pgsql_stand_by` (lectura)
+- **Sin poolers intermedios**: el ORM se conecta directamente a los nodos PostgreSQL
+- **Replicación inmediata**: Streaming Replication nativa entre master y standby
+- **Modo sticky deshabilitado**: la aplicación lee del standby en tiempo real sin sesiones fijas a un nodo
 - **Esquemas** (`search_path`): `odiseo`, `extension`, `audit`
 
 | Esquema | Propósito |
@@ -208,7 +210,9 @@ src/modules/{modulo}/
 | Write | `create`, `update`, `delete` (hard), `archive` (soft), `restore`, `upsert` | `VOLATILE` |
 | Lógica | `calculate` (`IMMUTABLE` si es matemática pura), `process`, `sync`, `approve`, `reject`, `assign` | `VOLATILE` |
 
-**Returns:** NUNCA `SETOF record`. Usar `TABLE(col1 type, col2 type)`.
+**Returns:**
+- Read: NUNCA `SETOF record`. Usar `TABLE(col1 type, col2 type)`.
+- Write: **retorno `void` obligatorio**. Prohibido retornar registros modificados, IDs o valores residuales (separación estricta de responsabilidades: quien escribe no lee).
 
 **Volatilidad (crítica):**
 - `IMMUTABLE`: Lógica pura, sin acceso a tablas. Cacheable.
