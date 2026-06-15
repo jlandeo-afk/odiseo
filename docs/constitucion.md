@@ -137,6 +137,8 @@ Los Use Cases **NO** gestionan transacciones. Se usa `TransactionalUseCase` como
 src/modules/{modulo}/
 ├── models/         # Tipos, interfaces, parámetros
 ├── pages/          # Componentes de página (.page.vue)
+├── components/     # Componentes que no llegaron a ser page/dialogs por ejemplo: Menu - Secciones del dialogo | Secciones de Page
+├── composables/    # Abstracción de logica de componentes, separacion Typescript y Html
 ├── services/       # Clase de servicio API (singleton)
 ├── dialogs/        # Componentes de diálogo
 ├── enums/          # Constantes y enumeraciones
@@ -149,21 +151,21 @@ src/modules/{modulo}/
 | Regla | Detalle |
 |-------|---------|
 | **1 archivo de servicio por módulo** | Clase con métodos HTTP, exporta singleton (`export default new ...`) |
-| **Cliente HTTP único** | `odiseoApi` desde `@/services/axios.js`, no crear instancias adicionales |
+| **Cliente HTTP único** | `odiseoApi` desde `@/services/axios.js`, no crear instancias adicionales, Base URL: `VITE_API_URL/v1` |
 | **Interceptors centralizados** | Manejo global de 401, 413, 504 sin redirects manuales |
 | **1 store Pinia por dominio** | Composition API style, no almacenar datos de formulario en stores |
 | **Composables** | Prefijo `use*`, lógica reactiva reutilizable |
-| **Routing lazy-loaded** | `() => import(...)`, file-based via `unplugin-vue-router` |
+| **Routing lazy-loaded** | `() => import(...)`, file-based via `unplugin-vue-router` Layouts asignados por `meta.layout` (default: vertical nav, blank: auth/error) |
+| **1 manejo de useTableData para información de tablas** | Clase que controla la paginación (items, isLoading, total, perPage), exporta singleton (`export default new ...`) |
+| **Uso de SweetAlert** | Para mostrar alertas, clase singletón  |
+| **Íconos** | Solo Remix Icons |
+| **Migración V1 → V2 incompleta** | Dos capas conviviendo |
+| **Migración uso estricto JS a TS** | Dos capas conviviendo, recomendado uso TS |
 
 ### Monitoreo (Sentry)
 
 - Inicializar en `main.js`, setear usuario post-login
 - Ignorar `ChunkLoadError`, filtrar errores sin frames `in_app`
-
-### Docker
-
-- Dev: `node:lts` + pnpm install + `pnpm dev --host`
-- Prod: Multi-stage (`node:18` builder → `nginx:stable-alpine`)
 
 ---
 
