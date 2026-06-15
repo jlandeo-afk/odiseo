@@ -309,7 +309,9 @@ public function down(): void
 
 ## QA / Testing
 
-### Estructura
+### Backend — Unit / Feature (Pest + PHPUnit)
+
+#### Estructura
 
 ```
 tests/Context/{Admin|Client}/{Modulo}/
@@ -323,7 +325,7 @@ tests/Context/{Admin|Client}/{Modulo}/
     └── Domain/                # Tests de entidades (sin mocks)
 ```
 
-### Reglas Obligatorias
+#### Reglas Obligatorias
 
 | Regla | Motivo |
 |-------|--------|
@@ -335,7 +337,7 @@ tests/Context/{Admin|Client}/{Modulo}/
 | No usar `ordered()` por defecto | Tests frágiles |
 | `assertJson()` para flujo feliz, `assertJsonStructure()` para listas | Precisión |
 
-### Cobertura Mínima (pipeline falla si no se alcanza)
+#### Cobertura Mínima
 
 | Tipo | Cobertura |
 |------|:---------:|
@@ -343,19 +345,71 @@ tests/Context/{Admin|Client}/{Modulo}/
 | Application (Unit) | **70%** |
 | Feature (HTTP) | **60%** |
 
-### Builders
+#### Builders
 
 - `BaseBuilder` (persiste en DB): `makeData()` + `insert()` + fluent API
 - `PayloadBuilder` (in-memory): `static buildStore(array $overrides = []): array`
 - `EntityBuilder` (in-memory): `static buildEntity(array $overrides = []): {Entity}`
 
-### Ejecución
+#### Ejecución
 
 ```bash
 php vendor/bin/pest --parallel
 php vendor/bin/pest --parallel --coverage --min=70
 php vendor/bin/pest --testsuite="Context Admin"
 ```
+
+### API / E2E (Playwright)
+
+Tests de integración y end-to-end con Playwright + TypeScript, en repositorio separado (`playqa`). Validan la experiencia real desde el navegador y la API usando Page Object Model y API Client Pattern.
+
+#### Estrategia — 4 Fases por Módulo
+
+Cada feature nueva debe considerar estas fases, en orden:
+
+| # | Fase | Qué valida | Capa principal |
+|---|------|------------|----------------|
+| 1 | **Smoke** | ¿Se puede navegar? ¿Carga la página? ¿La API responde? | API + Browser |
+| 2 | **CRUD** | Crear, Leer, Editar, Eliminar con datos válidos | API + Browser |
+| 3 | **Negativos** | Validaciones, campos obligatorios, restricciones, duplicados | API |
+| 4 | **E2E** | Flujos completos de negocio, permisos por rol, sesiones | Browser |
+
+#### Dual Layer — API + Browser
+
+| Capa | Framework | Ubicación | Propósito |
+|------|-----------|-----------|-----------|
+| **API** | `APIRequestContext` | `tests/api/{fase}/` | Validar lógica de negocio y respuestas HTTP, sin navegador |
+| **Browser** | Playwright Chromium | `tests/ui/{fase}/` | Validar UI/UX real, interacciones, flujos visuales |
+
+Los tests de browser usan los API Clients como data factories: crean datos vía API y validan solo la interacción de UI, evitando rellenar formularios repetitivos.
+
+
+#### Selectores — Crítico para Desarrollo
+
+La UI no usa `data-testid`. Los tests localizan elementos por semántica. Al construir componentes, asegurá que sean localizables por:
+
+| Prioridad | Estrategia | Implicancia al desarrollar |
+|-----------|------------|---------------------------|
+| 1 | `getByRole()` con `name` | Usar elementos HTML semánticos con texto/label accesible |
+| 2 | `getByLabel()` | Asociar `<label>` a campos de formulario |
+| 3 | `getByPlaceholder()` | Placeholders descriptivos y únicos |
+| 4 | `name` attribute | Usar `name` en inputs renderizados por backend |
+
+❌ **No usar**: IDs de Vuetify (`input-503`), clases internas (`.v-field__input`), scoped CSS (`data-v-*`) — son inestables entre builds.
+
+#### Trazabilidad
+
+Cada test se vincula a un caso de prueba con `story('CP_CLIE_EMPR_0001')` (Allure). Los tags de Playwright indican solo la fase (`@smoke`, `@crud`, `@negative`, `@e2e`).
+
+#### Ejecución Local
+
+```bash
+npx playwright test --project=api     # Solo API
+npx playwright test --project=ui      # Solo UI (Chromium)
+npx playwright test --ui              # Modo interactivo
+```
+
+> Los modos de ejecución en CI (smoke/full/api/ui/nightly) y la integración con el pipeline están en [DevOps / CI/CD](#devops--cicd).
 
 > 📎 ADR-011, ADR-012, ADR-013
 
