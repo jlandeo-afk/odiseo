@@ -11,9 +11,9 @@
 |-------|---------|
 | **Naming** | Dominio en español, patrones/clases/métodos en inglés, tablas inglés snake_case, tests español, commits inglés Conventional Commits, branches inglés kebab-case |
 | **Tipado estricto** | `declare(strict_types=1)` en todo PHP; `strict: true` en TypeScript nuevos |
-| **Linting** | PHPStan nivel max, Laravel Pint (PSR-12), ESLint + Prettier frontend |
+| **Linting** | PHPStan nivel 5, ESLint + Prettier frontend |
 | **Commits** | `type(scope): description` — `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf` |
-| **Branches** | `main` (prod), `staging`, `develop`, `feat/*`, `fix/*`, `refactor/*` |
+| **Branches** | `main` (prod), `testing`, `develop`, `feat/*`, `fix/*`, `refactor/*` |
 | **Evolución legacy** | Código nuevo en `src/`; legacy (`app/`) solo se modifica si es estrictamente necesario |
 
 ---
@@ -111,7 +111,7 @@ Los Use Cases **NO** gestionan transacciones. Se usa `TransactionalUseCase` como
 ### PHP Estricto
 
 - `declare(strict_types=1)` en TODO archivo `.php`
-- PHPStan nivel máximo (`phpstan.neon` + `phpstan.src.neon`)
+- PHPStan nivel 5 (`phpstan.neon` + `phpstan.src.neon`)
 
 > 📎 ADR-001 a ADR-010
 
@@ -174,48 +174,146 @@ src/modules/{modulo}/
 ### Versión y Conexiones
 
 - **PostgreSQL 16** obligatorio (LTS hasta 2028-11-09)
-- **Dos conexiones**: `pgsql_master` (escritura) + `pgsql_stand_by` (lectura)
-- Esquema único: `odiseo` (configurado en `search_path`)
+- **Dos conexiones directas**: `pgsql_master` (escritura) + `pgsql_stand_by` (lectura)
+- **Sin poolers intermedios**: el ORM se conecta directamente a los nodos PostgreSQL
+- **Replicación inmediata**: Streaming Replication nativa entre master y standby
+- **Modo sticky deshabilitado**: la aplicación lee del standby en tiempo real sin sesiones fijas a un nodo
+- **Esquemas** (`search_path`): `odiseo`, `extension`, `audit`
 
-### Convenciones
+| Esquema | Propósito |
+|---------|-----------|
+| `odiseo` | Datos de negocio (tablas, funciones, vistas) |
+| `extension` | Extensiones PostgreSQL (`citext`, `unaccent`, `pg_trgm`) |
+| `audit` | Auditoría (`audit_logs`, `function_log` para rollback de funciones) |
+
+### Naming & Structure
 
 | Elemento | Formato | Ejemplo |
 |----------|---------|---------|
-| Tablas | `snake_case`, plural inglés | `users`, `exam_questions` |
-| Columnas | `snake_case`, singular inglés | `user_id`, `fl_status` |
-| FKs | `{tabla_singular}_id` | `company_id` |
+| Tablas | `snake_case`, plural | `clients`, `course_user` |
+| PK | `id` (UUID preferido) | `id` |
+| FK | `{tabla_singular}_id` (con índice obligatorio) | `company_id` |
+| Columnas | `snake_case`, singular. `created_at`, `updated_at`, `created_by` siempre | `user_id`, `company_id` |
+| Funciones | `fn_` + parámetros `p_` + vars `v_` | `fn_get_user_by_id` |
+| Triggers | `trg_` | `trg_audit_users` |
+| Vistas | `v_` (estándar), `vm_` (materializada) | `v_active_users`, `vm_question_images` |
 | Índices | `idx_{tabla}_{cols}` | `idx_users_email` |
 | Constraints FK | `fk_{origen}_{destino}` | `fk_employees_user_id` |
 
-### Reglas
+### Funciones (PL/pgSQL)
+
+**Verbos estrictos:**
+
+| Categoría | Verbos | Volatilidad |
+|-----------|--------|:-----------:|
+| Read (1 fila) | `get` | `STABLE` |
+| Read (N filas) | `list`, `paginate`, `search` | `STABLE` |
+| Read (agregado) | `count`, `exists`/`is`/`has`/`can` | `STABLE` |
+| Write | `create`, `update`, `delete` (hard), `archive` (soft), `restore`, `upsert` | `VOLATILE` |
+| Lógica | `calculate` (`IMMUTABLE` si es matemática pura), `process`, `sync`, `approve`, `reject`, `assign` | `VOLATILE` |
+
+**Returns:**
+- Read: NUNCA `SETOF record`. Usar `TABLE(col1 type, col2 type)`.
+- Write: **retorno `void` obligatorio**. Prohibido retornar registros modificados, IDs o valores residuales (separación estricta de responsabilidades: quien escribe no lee).
+
+**Volatilidad (crítica):**
+- `IMMUTABLE`: Lógica pura, sin acceso a tablas. Cacheable.
+- `STABLE`: Solo lectura. Ejecuta una vez por transacción.
+- `VOLATILE`: Escritura/aleatorio. Re-ejecuta por cada fila.
+
+### Data Types
+
+| Dato | Tipo | Prohibido |
+|------|------|-----------|
+| Dinero | `DECIMAL(10,2)` | `money`, `FLOAT` |
+| Timestamps | `TIMESTAMPTZ` | `timestamp` sin TZ |
+| Fechas sin hora | `DATE` | — |
+| Texto | `TEXT` (límite solo si la lógica de negocio lo exige) | `VARCHAR` sin razón |
+| JSON | `JSONB` | `json` |
+
+### Query Rules
 
 | Regla | Detalle |
 |-------|---------|
-| **Migraciones versionadas** | `yyyy_mm_dd_hhmmss_descripcion.php`, reversibles (`down()` funcional) |
-| **1 migración por PR** | Agrupar cambios relacionados |
-| **Soft deletes** | `deleted_at TIMESTAMPTZ NULL` (no boolean). `fl_status` = activación funcional |
-| **Índices parciales** | `WHERE deleted_at IS NULL` para tablas con soft deletes |
-| **Particionado** | Tablas >100M registros: particionado nativo por RANGE |
-| **Auditoría** | Tablas críticas con triggers → `odiseo.audit_logs` |
+| `SELECT` | Columnas explícitas. **NUNCA `SELECT *`** |
+| Filtrado | `WHERE` antes de `GROUP BY`. `HAVING` solo tras agregados |
+| Fechas | Usar rangos (`>=` y `<`). NUNCA funciones en `WHERE` (matan índices). NUNCA `BETWEEN` para timestamps |
+| Sets | Preferir `UNION ALL` sobre `UNION` (sin deduplicación, más rápido) |
+| N+1 | Usar Eloquent Eager Loading (`with()`) o CTEs/LATERAL JOINs en SQL |
 
-### Extensiones Permitidas
+### DML & Safety
 
-`uuid-ossp`, `pg_trgm`, `btree_gin`, `citext`
+| Regla | Detalle |
+|-------|---------|
+| Soft delete | `deleted_at TIMESTAMPTZ NULL`. `deleted_by` FK a `users` |
+| `ON DELETE` | `RESTRICT` por defecto. `CASCADE` solo si es lógicamente requerido (ej: order → order_items) y documentado |
+| Parameter binding | Siempre usar binding (`?` o arrays) o Eloquent. **NUNCA** interpolar strings en SQL raw |
+| Transacciones | Writes multi-paso en `DB::transaction()` |
 
-### Índices por Tipo
+### Migraciones
+
+**Estructura por tipo:**
+
+| Tipo | Carpeta | Estructura | Ejemplo |
+|------|---------|------------|---------|
+| Tablas | `tables/{table_}<nombre>/` | N archivos `.php` (creación + cambios) | `tables/table_course/` → `2025_06_10_000000_create.php` |
+| Funciones | `functions/fn_<nombre>/` | 1 `.php` + 1 `.sql` | `functions/fn_get_questions_ia/` → `2026_04_28_115315_fn_get_questions_ia.php` + `fn_get_questions_ia.sql` |
+| Vistas | `views/v_<nombre>/` o `views/vm_<nombre>/` | 1 `.php` | `views/vm_question_images/` |
+| Triggers | `triggers/` | Archivos planos | `triggers/2025_..._trg_xxx.php` |
+| Extensiones | `extensions/ex_<nombre>/` | 1 `.php` | `extensions/ex_unnacent/` |
+| Schema | `schema/sch_<nombre>/` | 1 `.php` | `schema/sch_odiseo/` |
+
+**Patrón para funciones (obligatorio):**
+```php
+// functions/fn_get_user_by_id/YYYY_MM_DD_HHMMSS_fn_get_user_by_id.php
+public function up(): void
+{
+    $this->down();                                    // Idempotente: drop antes de recrear
+    $sql = file_get_contents(__DIR__ . '/fn_get_user_by_id.sql');
+    DB::unprepared($sql);
+}
+public function down(): void
+{
+    rollbackFunctionPostgres('fn_get_user_by_id');    // Helper: restaura versión anterior desde audit.function_log
+}
+```
+
+**Reglas:**
+
+| Regla | Detalle |
+|-------|---------|
+| Formato timestamp | `YYYY_MM_DD_HHMMSS_<descripcion>.php` |
+| `down()` | **Debe ser reversible** siempre (tablas: `Schema::dropIfExists`, funciones: `rollbackFunctionPostgres()`) |
+| Funciones | `up()` llama a `down()` primero (idempotencia). SQL en archivo `.sql` separado, leído con `file_get_contents()` |
+| 1 carpeta = 1 artefacto | Cada función/tabla/vista tiene su carpeta dedicada |
+| 1 PR = 1 migración | Agrupar cambios relacionados |
+| Tablas grandes | **NUNCA `ALTER TYPE`** en tablas >1M filas (crear columna nueva → backfill → swap) |
+
+### Índices
 
 | Tipo | Uso |
 |------|-----|
 | B-tree (default) | FKs, búsqueda frecuente, ordenamiento |
 | GIN | JSONB, full-text, arrays |
-| Partial | Filtrar por condición común |
+| Partial | `WHERE deleted_at IS NULL` para tablas con soft deletes |
 | Composite | Queries multi-columna |
+
+### Particionado y Auditoría
+
+- **Particionado nativo** por RANGE para tablas >100M registros
+- **Auditoría**: triggers en tablas críticas → `audit.audit_logs`. Rollback de funciones via `audit.function_log`
+
+### Extensiones
+
+`uuid-ossp`, `pg_trgm`, `btree_gin`, `citext`, `unaccent` — instaladas en esquema `extension`
 
 ---
 
 ## QA / Testing
 
-### Estructura
+### Backend — Unit / Feature (Pest + PHPUnit)
+
+#### Estructura
 
 ```
 tests/Context/{Admin|Client}/{Modulo}/
@@ -229,7 +327,7 @@ tests/Context/{Admin|Client}/{Modulo}/
     └── Domain/                # Tests de entidades (sin mocks)
 ```
 
-### Reglas Obligatorias
+#### Reglas Obligatorias
 
 | Regla | Motivo |
 |-------|--------|
@@ -241,7 +339,7 @@ tests/Context/{Admin|Client}/{Modulo}/
 | No usar `ordered()` por defecto | Tests frágiles |
 | `assertJson()` para flujo feliz, `assertJsonStructure()` para listas | Precisión |
 
-### Cobertura Mínima (pipeline falla si no se alcanza)
+#### Cobertura Mínima
 
 | Tipo | Cobertura |
 |------|:---------:|
@@ -249,19 +347,71 @@ tests/Context/{Admin|Client}/{Modulo}/
 | Application (Unit) | **70%** |
 | Feature (HTTP) | **60%** |
 
-### Builders
+#### Builders
 
 - `BaseBuilder` (persiste en DB): `makeData()` + `insert()` + fluent API
 - `PayloadBuilder` (in-memory): `static buildStore(array $overrides = []): array`
 - `EntityBuilder` (in-memory): `static buildEntity(array $overrides = []): {Entity}`
 
-### Ejecución
+#### Ejecución
 
 ```bash
 php vendor/bin/pest --parallel
 php vendor/bin/pest --parallel --coverage --min=70
 php vendor/bin/pest --testsuite="Context Admin"
 ```
+
+### API / E2E (Playwright)
+
+Tests de integración y end-to-end con Playwright + TypeScript, en repositorio separado (`playqa`). Validan la experiencia real desde el navegador y la API usando Page Object Model y API Client Pattern.
+
+#### Estrategia — 4 Fases por Módulo
+
+Cada feature nueva debe considerar estas fases, en orden:
+
+| # | Fase | Qué valida | Capa principal |
+|---|------|------------|----------------|
+| 1 | **Smoke** | ¿Se puede navegar? ¿Carga la página? ¿La API responde? | API + Browser |
+| 2 | **CRUD** | Crear, Leer, Editar, Eliminar con datos válidos | API + Browser |
+| 3 | **Negativos** | Validaciones, campos obligatorios, restricciones, duplicados | API |
+| 4 | **E2E** | Flujos completos de negocio, permisos por rol, sesiones | Browser |
+
+#### Dual Layer — API + Browser
+
+| Capa | Framework | Ubicación | Propósito |
+|------|-----------|-----------|-----------|
+| **API** | `APIRequestContext` | `tests/api/{fase}/` | Validar lógica de negocio y respuestas HTTP, sin navegador |
+| **Browser** | Playwright Chromium | `tests/ui/{fase}/` | Validar UI/UX real, interacciones, flujos visuales |
+
+Los tests de browser usan los API Clients como data factories: crean datos vía API y validan solo la interacción de UI, evitando rellenar formularios repetitivos.
+
+
+#### Selectores — Crítico para Desarrollo
+
+La UI no usa `data-testid`. Los tests localizan elementos por semántica. Al construir componentes, asegurá que sean localizables por:
+
+| Prioridad | Estrategia | Implicancia al desarrollar |
+|-----------|------------|---------------------------|
+| 1 | `getByRole()` con `name` | Usar elementos HTML semánticos con texto/label accesible |
+| 2 | `getByLabel()` | Asociar `<label>` a campos de formulario |
+| 3 | `getByPlaceholder()` | Placeholders descriptivos y únicos |
+| 4 | `name` attribute | Usar `name` en inputs renderizados por backend |
+
+❌ **No usar**: IDs de Vuetify (`input-503`), clases internas (`.v-field__input`), scoped CSS (`data-v-*`) — son inestables entre builds.
+
+#### Trazabilidad
+
+Cada test se vincula a un caso de prueba con `story('CP_CLIE_EMPR_0001')` (Allure). Los tags de Playwright indican solo la fase (`@smoke`, `@crud`, `@negative`, `@e2e`).
+
+#### Ejecución Local
+
+```bash
+npx playwright test --project=api     # Solo API
+npx playwright test --project=ui      # Solo UI (Chromium)
+npx playwright test --ui              # Modo interactivo
+```
+
+> Los modos de ejecución en CI (smoke/full/api/ui/nightly) y la integración con el pipeline están en [DevOps / CI/CD](#devops--cicd).
 
 > 📎 ADR-011, ADR-012, ADR-013
 
@@ -271,45 +421,65 @@ php vendor/bin/pest --testsuite="Context Admin"
 
 ### Pipeline Stages
 
-```
-lint → test → build → security → deploy
-                              (manual: staging, production + approval)
-```
+**Backend**: `backup → build → deploy → PlayQA`
+**Frontend**: `versioning → build → deploy → PlayQA`
 
-### Jobs
+### Jobs por Stage
 
 | Stage | Backend | Frontend |
 |-------|---------|----------|
-| **lint** | PHPStan nivel max | ESLint + typecheck |
-| **test** | Pest + PHPUnit (PostgreSQL 16 service), cobertura ≥70% | Vitest + coverage |
-| **build** | Docker build + push a registry | Docker build + push a registry |
-| **security** | Trivy scan (HIGH, CRITICAL) | Trivy scan (HIGH, CRITICAL) |
-| **deploy** | SSH → docker-compose pull + up (dev: auto; staging/prod: manual) | Igual |
+| **backup** | `pg_dump` cifrado + retención 20 backups + sync GDrive (solo `main`) | — |
+| **versioning** | — | `pnpm version` semántico vía `#major` / `#minor` en commit (solo `main`) |
+| **build** | `composer install`, `npm install`, PHPStan (no en prod), `artisan migrate`, cache | `pnpm install --frozen-lockfile`, `pnpm build` |
+| **deploy** | `rsync` bare-metal → `/var/www/odiseo-backend/`, permisos, `supervisorctl restart` | `cp -r dist/` → `/var/www/odiseo-frontend/`, permisos |
+| **PlayQA** | Tests E2E con Playwright (ver abajo) | Tests E2E con Playwright (ver abajo) |
 
-### Docker
+### Despliegue (rsync bare-metal)
 
-- Backend: `Dockerfile.prod`
-- Frontend: `prod.Dockerfile` (multi-stage: node:18 → nginx:stable-alpine)
-- Dev: `dev.Dockerfile` con hot reload
+- **Sin Docker**: despliegue directo vía rsync desde path de preprod al web root
+- **Backend — 2 servidores**: server 1 ejecuta migraciones, server 2 no (evita locking por migraciones concurrentes)
+- **Frontend — 1 servidor por entorno** (2 servidores en `main`)
+- **Producción**: `--force` en migraciones; PHPStan deshabilitado en build
+- **Supervisorctl**: restart automático post-deploy backend
 
-### Rollback
+### PlayQA (E2E con Playwright)
 
-- Tag-based: crear tag `rollback-<YYYYMMDD-HHMMSS>` → pipeline manual con imagen anterior
-- Migraciones deben ser reversibles (`migrate:rollback`)
+Repositorio separado (`playqa`), clonado en el job. Imagen `mcr.microsoft.com/playwright:noble`. Reportes Allure + JUnit como artifacts.
+
+| Modo | Disparo | Ramas |
+|------|---------|-------|
+| **smoke** | Automático en push | `develop`, `testing` |
+| **full** | Manual: `#test` en commit message | `develop`, `testing` |
+| **api-only** | Manual: `#api` en commit message | `develop`, `testing` |
+| **ui-only** | Manual: `#ui` en commit message | `develop`, `testing` |
+| **nightly** | Schedule (3 AM) | `testing` |
+
+Retención de artifacts: 7 días (smoke/full), 30 días (nightly).
+
+### Backup de Base de Datos
+
+- **Disparo**: automático en push a `main`. Se omite con tag `#no-backup` en commit
+- **Herramienta**: `pg_dump -Fc` comprimido con gzip + zip con contraseña
+- **Retención**: últimos 20 backups locales
+- **Sync externo**: rsync a carpeta montada de Google Drive (rclone)
+
+### Versionado (Frontend)
+
+- Job `bump-version` en stage `versioning`, solo en `main`
+- Detecta tags en commit message:
+  - `#major` → major release
+  - `#minor` → sprint release
+  - default → patch/hotfix
+- Ejecuta `pnpm version` + `git push --follow-tags origin main`
 
 ### Entornos
 
-| Rama | Entorno | Deploy |
-|------|---------|--------|
-| `develop` | dev.odiseo.app | Automático |
-| `staging` | staging.odiseo.app | Manual |
-| `main` (tag `v*.*.*`) | odiseo.app | Manual + aprobación |
-
-### Notificaciones
-
-- Slack/Teams en fallo de pipeline
-- MR comments con cobertura y lint
-- Sentry release tracking
+| Rama | Entorno | Backend URL | Frontend URL | Deploy |
+|------|---------|-------------|-------------|--------|
+| `develop` | dev | `apidev.odiseo.pe` | `dev.odiseo.pe` | Automático |
+| `testing` | testing | `apitest.odiseo.pe` | `test.odiseo.pe` | Automático |
+| `demo` | demo (B2B) | `apidemo.odiseo.pe` | `demo.odiseo.pe` | Automático |
+| `main` | producción | `api.odiseo.pe` | `vonex.odiseo.pe` | Automático |
 
 ---
 
