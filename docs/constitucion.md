@@ -173,41 +173,133 @@ src/modules/{modulo}/
 
 - **PostgreSQL 16** obligatorio (LTS hasta 2028-11-09)
 - **Dos conexiones**: `pgsql_master` (escritura) + `pgsql_stand_by` (lectura)
-- Esquema único: `odiseo` (configurado en `search_path`)
+- ORM: Laravel Eloquent
+- **Esquemas** (`search_path`): `odiseo`, `extension`, `audit`
 
-### Convenciones
+| Esquema | Propósito |
+|---------|-----------|
+| `odiseo` | Datos de negocio (tablas, funciones, vistas) |
+| `extension` | Extensiones PostgreSQL (`citext`, `unaccent`, `pg_trgm`) |
+| `audit` | Auditoría (`audit_logs`, `function_log` para rollback de funciones) |
+
+### Naming & Structure
 
 | Elemento | Formato | Ejemplo |
 |----------|---------|---------|
-| Tablas | `snake_case`, plural inglés | `users`, `exam_questions` |
-| Columnas | `snake_case`, singular inglés | `user_id`, `fl_status` |
-| FKs | `{tabla_singular}_id` | `company_id` |
+| Tablas | `snake_case`, plural | `clients`, `course_user` |
+| PK | `id` (UUID preferido) | `id` |
+| FK | `{tabla_singular}_id` (con índice obligatorio) | `company_id` |
+| Columnas | `snake_case`, singular. `created_at`, `updated_at`, `created_by` siempre | `user_id`, `company_id` |
+| Funciones | `fn_` + parámetros `p_` + vars `v_` | `fn_get_user_by_id` |
+| Triggers | `trg_` | `trg_audit_users` |
+| Vistas | `v_` (estándar), `vm_` (materializada) | `v_active_users`, `vm_question_images` |
 | Índices | `idx_{tabla}_{cols}` | `idx_users_email` |
 | Constraints FK | `fk_{origen}_{destino}` | `fk_employees_user_id` |
 
-### Reglas
+### Funciones (PL/pgSQL)
+
+**Verbos estrictos:**
+
+| Categoría | Verbos | Volatilidad |
+|-----------|--------|:-----------:|
+| Read (1 fila) | `get` | `STABLE` |
+| Read (N filas) | `list`, `paginate`, `search` | `STABLE` |
+| Read (agregado) | `count`, `exists`/`is`/`has`/`can` | `STABLE` |
+| Write | `create`, `update`, `delete` (hard), `archive` (soft), `restore`, `upsert` | `VOLATILE` |
+| Lógica | `calculate` (`IMMUTABLE` si es matemática pura), `process`, `sync`, `approve`, `reject`, `assign` | `VOLATILE` |
+
+**Returns:** NUNCA `SETOF record`. Usar `TABLE(col1 type, col2 type)`.
+
+**Volatilidad (crítica):**
+- `IMMUTABLE`: Lógica pura, sin acceso a tablas. Cacheable.
+- `STABLE`: Solo lectura. Ejecuta una vez por transacción.
+- `VOLATILE`: Escritura/aleatorio. Re-ejecuta por cada fila.
+
+### Data Types
+
+| Dato | Tipo | Prohibido |
+|------|------|-----------|
+| Dinero | `DECIMAL(10,2)` | `money`, `FLOAT` |
+| Timestamps | `TIMESTAMPTZ` | `timestamp` sin TZ |
+| Fechas sin hora | `DATE` | — |
+| Texto | `TEXT` (límite solo si la lógica de negocio lo exige) | `VARCHAR` sin razón |
+| JSON | `JSONB` | `json` |
+
+### Query Rules
 
 | Regla | Detalle |
 |-------|---------|
-| **Migraciones versionadas** | `yyyy_mm_dd_hhmmss_descripcion.php`, reversibles (`down()` funcional) |
-| **1 migración por PR** | Agrupar cambios relacionados |
-| **Soft deletes** | `deleted_at TIMESTAMPTZ NULL` (no boolean). `fl_status` = activación funcional |
-| **Índices parciales** | `WHERE deleted_at IS NULL` para tablas con soft deletes |
-| **Particionado** | Tablas >100M registros: particionado nativo por RANGE |
-| **Auditoría** | Tablas críticas con triggers → `odiseo.audit_logs` |
+| `SELECT` | Columnas explícitas. **NUNCA `SELECT *`** |
+| Filtrado | `WHERE` antes de `GROUP BY`. `HAVING` solo tras agregados |
+| Fechas | Usar rangos (`>=` y `<`). NUNCA funciones en `WHERE` (matan índices). NUNCA `BETWEEN` para timestamps |
+| Sets | Preferir `UNION ALL` sobre `UNION` (sin deduplicación, más rápido) |
+| N+1 | Usar Eloquent Eager Loading (`with()`) o CTEs/LATERAL JOINs en SQL |
 
-### Extensiones Permitidas
+### DML & Safety
 
-`uuid-ossp`, `pg_trgm`, `btree_gin`, `citext`
+| Regla | Detalle |
+|-------|---------|
+| Soft delete | `deleted_at TIMESTAMPTZ NULL`. `deleted_by` FK a `users` |
+| `ON DELETE` | `RESTRICT` por defecto. `CASCADE` solo si es lógicamente requerido (ej: order → order_items) y documentado |
+| Parameter binding | Siempre usar binding (`?` o arrays) o Eloquent. **NUNCA** interpolar strings en SQL raw |
+| Transacciones | Writes multi-paso en `DB::transaction()` |
 
-### Índices por Tipo
+### Migraciones
+
+**Estructura por tipo:**
+
+| Tipo | Carpeta | Estructura | Ejemplo |
+|------|---------|------------|---------|
+| Tablas | `tables/{table_}<nombre>/` | N archivos `.php` (creación + cambios) | `tables/table_course/` → `2025_06_10_000000_create.php` |
+| Funciones | `functions/fn_<nombre>/` | 1 `.php` + 1 `.sql` | `functions/fn_get_questions_ia/` → `2026_04_28_115315_fn_get_questions_ia.php` + `fn_get_questions_ia.sql` |
+| Vistas | `views/v_<nombre>/` o `views/vm_<nombre>/` | 1 `.php` | `views/vm_question_images/` |
+| Triggers | `triggers/` | Archivos planos | `triggers/2025_..._trg_xxx.php` |
+| Extensiones | `extensions/ex_<nombre>/` | 1 `.php` | `extensions/ex_unnacent/` |
+| Schema | `schema/sch_<nombre>/` | 1 `.php` | `schema/sch_odiseo/` |
+
+**Patrón para funciones (obligatorio):**
+```php
+// functions/fn_get_user_by_id/YYYY_MM_DD_HHMMSS_fn_get_user_by_id.php
+public function up(): void
+{
+    $this->down();                                    // Idempotente: drop antes de recrear
+    $sql = file_get_contents(__DIR__ . '/fn_get_user_by_id.sql');
+    DB::unprepared($sql);
+}
+public function down(): void
+{
+    rollbackFunctionPostgres('fn_get_user_by_id');    // Helper: restaura versión anterior desde audit.function_log
+}
+```
+
+**Reglas:**
+
+| Regla | Detalle |
+|-------|---------|
+| Formato timestamp | `YYYY_MM_DD_HHMMSS_<descripcion>.php` |
+| `down()` | **Debe ser reversible** siempre (tablas: `Schema::dropIfExists`, funciones: `rollbackFunctionPostgres()`) |
+| Funciones | `up()` llama a `down()` primero (idempotencia). SQL en archivo `.sql` separado, leído con `file_get_contents()` |
+| 1 carpeta = 1 artefacto | Cada función/tabla/vista tiene su carpeta dedicada |
+| 1 PR = 1 migración | Agrupar cambios relacionados |
+| Tablas grandes | **NUNCA `ALTER TYPE`** en tablas >1M filas (crear columna nueva → backfill → swap) |
+
+### Índices
 
 | Tipo | Uso |
 |------|-----|
 | B-tree (default) | FKs, búsqueda frecuente, ordenamiento |
 | GIN | JSONB, full-text, arrays |
-| Partial | Filtrar por condición común |
+| Partial | `WHERE deleted_at IS NULL` para tablas con soft deletes |
 | Composite | Queries multi-columna |
+
+### Particionado y Auditoría
+
+- **Particionado nativo** por RANGE para tablas >100M registros
+- **Auditoría**: triggers en tablas críticas → `audit.audit_logs`. Rollback de funciones via `audit.function_log`
+
+### Extensiones
+
+`uuid-ossp`, `pg_trgm`, `btree_gin`, `citext`, `unaccent` — instaladas en esquema `extension`
 
 ---
 
