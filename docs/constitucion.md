@@ -269,45 +269,65 @@ php vendor/bin/pest --testsuite="Context Admin"
 
 ### Pipeline Stages
 
-```
-lint → test → build → security → deploy
-                              (manual: staging, production + approval)
-```
+**Backend**: `backup → build → deploy → PlayQA`
+**Frontend**: `versioning → build → deploy → PlayQA`
 
-### Jobs
+### Jobs por Stage
 
 | Stage | Backend | Frontend |
 |-------|---------|----------|
-| **lint** | PHPStan nivel max | ESLint + typecheck |
-| **test** | Pest + PHPUnit (PostgreSQL 16 service), cobertura ≥70% | Vitest + coverage |
-| **build** | Docker build + push a registry | Docker build + push a registry |
-| **security** | Trivy scan (HIGH, CRITICAL) | Trivy scan (HIGH, CRITICAL) |
-| **deploy** | SSH → docker-compose pull + up (dev: auto; staging/prod: manual) | Igual |
+| **backup** | `pg_dump` cifrado + retención 20 backups + sync GDrive (solo `main`) | — |
+| **versioning** | — | `pnpm version` semántico vía `#major` / `#minor` en commit (solo `main`) |
+| **build** | `composer install`, `npm install`, PHPStan (no en prod), `artisan migrate`, cache | `pnpm install --frozen-lockfile`, `pnpm build` |
+| **deploy** | `rsync` bare-metal → `/var/www/odiseo-backend/`, permisos, `supervisorctl restart` | `cp -r dist/` → `/var/www/odiseo-frontend/`, permisos |
+| **PlayQA** | Tests E2E con Playwright (ver abajo) | Tests E2E con Playwright (ver abajo) |
 
-### Docker
+### Despliegue (rsync bare-metal)
 
-- Backend: `Dockerfile.prod`
-- Frontend: `prod.Dockerfile` (multi-stage: node:18 → nginx:stable-alpine)
-- Dev: `dev.Dockerfile` con hot reload
+- **Sin Docker**: despliegue directo vía rsync desde path de preprod al web root
+- **Backend — 2 servidores**: server 1 ejecuta migraciones, server 2 no (evita locking por migraciones concurrentes)
+- **Frontend — 1 servidor por entorno** (2 servidores en `main`)
+- **Producción**: `--force` en migraciones; PHPStan deshabilitado en build
+- **Supervisorctl**: restart automático post-deploy backend
 
-### Rollback
+### PlayQA (E2E con Playwright)
 
-- Tag-based: crear tag `rollback-<YYYYMMDD-HHMMSS>` → pipeline manual con imagen anterior
-- Migraciones deben ser reversibles (`migrate:rollback`)
+Repositorio separado (`playqa`), clonado en el job. Imagen `mcr.microsoft.com/playwright:noble`. Reportes Allure + JUnit como artifacts.
+
+| Modo | Disparo | Ramas |
+|------|---------|-------|
+| **smoke** | Automático en push | `develop`, `testing` |
+| **full** | Manual: `#test` en commit message | `develop`, `testing` |
+| **api-only** | Manual: `#api` en commit message | `develop`, `testing` |
+| **ui-only** | Manual: `#ui` en commit message | `develop`, `testing` |
+| **nightly** | Schedule (3 AM) | `testing` |
+
+Retención de artifacts: 7 días (smoke/full), 30 días (nightly).
+
+### Backup de Base de Datos
+
+- **Disparo**: automático en push a `main`. Se omite con tag `#no-backup` en commit
+- **Herramienta**: `pg_dump -Fc` comprimido con gzip + zip con contraseña
+- **Retención**: últimos 20 backups locales
+- **Sync externo**: rsync a carpeta montada de Google Drive (rclone)
+
+### Versionado (Frontend)
+
+- Job `bump-version` en stage `versioning`, solo en `main`
+- Detecta tags en commit message:
+  - `#major` → major release
+  - `#minor` → sprint release
+  - default → patch/hotfix
+- Ejecuta `pnpm version` + `git push --follow-tags origin main`
 
 ### Entornos
 
-| Rama | Entorno | Deploy |
-|------|---------|--------|
-| `develop` | dev.odiseo.app | Automático |
-| `staging` | staging.odiseo.app | Manual |
-| `main` (tag `v*.*.*`) | odiseo.app | Manual + aprobación |
-
-### Notificaciones
-
-- Slack/Teams en fallo de pipeline
-- MR comments con cobertura y lint
-- Sentry release tracking
+| Rama | Entorno | Backend URL | Frontend URL | Deploy |
+|------|---------|-------------|-------------|--------|
+| `develop` | dev | `apidev.odiseo.pe` | `dev.odiseo.pe` | Automático |
+| `testing` | testing | `apitest.odiseo.pe` | `test.odiseo.pe` | Automático |
+| `demo` | demo (B2B) | `apidemo.odiseo.pe` | `demo.odiseo.pe` | Automático |
+| `main` | producción | `api.odiseo.pe` | `vonex.odiseo.pe` | Automático |
 
 ---
 
