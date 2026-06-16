@@ -32,8 +32,8 @@ de super administrador de la empresa base pueden operar este módulo.
 
 | ID | Criterio de aceptación |
 |----|------------------------|
-| **AC-1.1** | **Dado** que existe una empresa cliente con al menos un administrador asignado, **cuando** el super admin base consulta el endpoint `GET /v2/client/{companyId}/admins`, **entonces** recibe una lista paginada con los administradores de esa empresa, incluyendo `id`, `nombres`, `apellidos`, `email`, `documento` y `teléfono`. |
-| **AC-1.2** | **Dado** que existe una empresa cliente sin administradores asignados, **cuando** el super admin base consulta el listado, **entonces** recibe una lista vacía con `data: []`. |
+| **AC-1.1** | **Dado** que existe una empresa cliente con al menos un administrador asignado, **cuando** el super admin base consulta el endpoint `GET /v2/client/{companyId}/admins`, **entonces** recibe una lista paginada con los administradores de esa empresa, incluyendo `id`, `nombres`, `apellidos`, `email`, `documento` y `teléfono`, con status `200`. |
+| **AC-1.2** | **Dado** que existe una empresa cliente sin administradores asignados, **cuando** el super admin base consulta el listado, **entonces** recibe status `200` con `data: []` y `total: 0`. |
 | **AC-1.3** | **Dado** que se envía el query param `search` con un término de búsqueda, **cuando** el super admin base consulta el listado, **entonces** recibe solo los administradores cuyo `nombre` o `email` contengan el término (búsqueda parcial, case-insensitive). |
 | **AC-1.4** | **Dado** que un usuario sin rol de super administrador de la empresa base intenta consultar el listado, **cuando** hace la petición, **entonces** recibe `403 Forbidden`. |
 
@@ -45,17 +45,14 @@ de super administrador de la empresa base pueden operar este módulo.
 
 | ID | Criterio de aceptación |
 |----|------------------------|
-| **AC-2.1** (Crear nuevo admin) | **Dado** que existe una empresa cliente, **cuando** el super admin base envía `POST /v2/client/{companyId}/admins` con los datos de una persona que no existe en el sistema (`nombres`, `apellidos`, `email`, `documento`, `teléfono`, `tipo_documento_id`, `password`), **entonces** el sistema crea un nuevo usuario, un nuevo empleado asociado a la empresa, le asigna el rol "Super Administrador" de esa empresa, lo registra en `company_user_admin`, y retorna `201` con los datos del administrador creado. |
-| **AC-2.2** (Promocionar empleado existente) | **Dado** que existe un empleado activo en la empresa que no es administrador de ninguna empresa, **cuando** el super admin base envía la misma petición con el `employee_id` del empleado existente, **entonces** el sistema le asigna el rol "Super Administrador" (si no lo tiene), lo registra en `company_user_admin`, y retorna `201`. |
-| **AC-2.3** (Email duplicado) | **Dado** que el `email` enviado ya pertenece a un usuario existente en el sistema, **cuando** se intenta crear un nuevo administrador (AC-2.1), **entonces** el sistema retorna `409 Conflict` con mensaje "El email ya está registrado en el sistema". |
-| **AC-2.4** (Admin duplicado en misma empresa) | **Dado** que el empleado a promocionar ya es administrador de esta empresa, **cuando** se envía la petición, **entonces** el sistema retorna `409 Conflict` con mensaje "El empleado ya es administrador de esta empresa". |
-| **AC-2.5** (Admin no elegible) | **Dado** que el empleado a promocionar no cumple las condiciones para ser administrador, **cuando** se envía la petición, **entonces** el sistema retorna `409 Conflict` con un mensaje genérico que no revela información sobre otras empresas. |
-| **AC-2.6** (Actualizar admin) | **Dado** que existe un administrador en una empresa, **cuando** el super admin base envía `PUT /v2/client/{companyId}/admins/{id}` con nuevos datos (nombres, apellidos, teléfono, documento, tipo_documento_id), **entonces** el sistema actualiza los datos del usuario/empleado subyacente y retorna `200` con los datos actualizados. |
-| **AC-2.7** (Bloquear edición de email) | **Dado** que existe un administrador, **cuando** se envía `PUT` incluyendo el campo `email`, **entonces** el sistema ignora o rechaza ese campo, sin modificar el email existente. |
-| **AC-2.8** (Eliminar admin — éxito) | **Dado** que una empresa tiene 2 o más administradores, **cuando** el super admin base envía `DELETE /v2/client/{companyId}/admins/{id}`, **entonces** el sistema elimina el registro en `company_user_admin`, el registro en `user_roles`, el empleado y el usuario asociado, y retorna `200` con mensaje de confirmación. |
-| **AC-2.9** (Eliminar último admin — rechazo) | **Dado** que una empresa tiene exactamente 1 administrador, **cuando** el super admin base intenta eliminarlo, **entonces** el sistema retorna `409 Conflict` con mensaje "No se puede eliminar el único administrador de la empresa". |
-| **AC-2.10** (Empresa inexistente) | **Dado** que el `companyId` no corresponde a una empresa activa, **cuando** se realiza cualquier operación, **entonces** el sistema retorna `404 Not Found`. |
-| **AC-2.11** (Permiso denegado en escritura) | **Dado** que un usuario sin rol de super administrador de la empresa base intenta crear, actualizar o eliminar un administrador, **cuando** hace la petición, **entonces** recibe `403 Forbidden`. |
+| **AC-2.1** (Crear admin) | **Dado** que existe una empresa cliente, **cuando** el super admin base envía `POST /v2/client/{companyId}/admins` con los datos de una persona que no existe en el sistema (`nombres`, `apellidos`, `email`, `documento`, `teléfono`, `tipo_documento_id`, `password`), **entonces** el sistema crea un nuevo usuario, un nuevo empleado asociado a la empresa, le asigna el rol "Super Administrador" de esa empresa, lo registra en `company_user_admin`, y retorna status `200` con los datos del administrador creado. |
+| **AC-2.2** (Email duplicado) | **Dado** que el `email` enviado ya pertenece a un usuario existente en el sistema, **cuando** se intenta crear un nuevo administrador, **entonces** el sistema retorna `409 Conflict` con mensaje "El email ya está registrado en el sistema". |
+| **AC-2.3** (Actualizar admin) | **Dado** que existe un administrador en una empresa, **cuando** el super admin base envía `PUT /v2/client/{companyId}/admins/{id}` con nuevos datos (nombres, apellidos, teléfono, documento, tipo_documento_id), **entonces** el sistema actualiza los datos del usuario/empleado subyacente y retorna status `200` con los datos actualizados. |
+| **AC-2.4** (Bloquear edición de email) | **Dado** que existe un administrador, **cuando** se envía `PUT` incluyendo el campo `email`, **entonces** el sistema rechaza o ignora ese campo, sin modificar el email existente. |
+| **AC-2.5** (Eliminar admin — éxito) | **Dado** que una empresa tiene 2 o más administradores, **cuando** el super admin base envía `DELETE /v2/client/{companyId}/admins/{id}`, **entonces** el sistema elimina el registro en `company_user_admin`, el registro en `user_roles`, el empleado y el usuario asociado, y retorna status `200` con mensaje de confirmación. |
+| **AC-2.6** (Eliminar último admin — rechazo) | **Dado** que una empresa tiene exactamente 1 administrador, **cuando** el super admin base intenta eliminarlo, **entonces** el sistema retorna `409 Conflict` con mensaje "No se puede eliminar el único administrador de la empresa". |
+| **AC-2.7** (Empresa inexistente) | **Dado** que el `companyId` no corresponde a una empresa activa, **cuando** se realiza cualquier operación, **entonces** el sistema retorna `404 Not Found`. |
+| **AC-2.8** (Permiso denegado en escritura) | **Dado** que un usuario sin rol de super administrador de la empresa base intenta crear, actualizar o eliminar un administrador, **cuando** hace la petición, **entonces** recibe `403 Forbidden`. |
 
 ---
 
@@ -73,14 +70,12 @@ de super administrador de la empresa base pueden operar este módulo.
 
 ## 4. Casos borde
 
-- Crear admin sin enviar `password` ni `employee_id` -> error de validación `422`.
-- Enviar `employee_id` de un empleado que pertenece a otra empresa -> `409` genérico (sin revelar información).
-- Enviar `employee_id` de un empleado ya eliminado (soft-delete) -> `404`.
+- Crear admin sin enviar `password` -> error de validación `422`.
 - Eliminar un admin que ya fue eliminado (operación repetida) -> `200` (idempotente, NFR-3).
-- Intentar promocionar a un empleado que ya es admin de la misma empresa (race condition) -> `409`.
 - `companyId` no numérico o negativo -> `422`.
 - Campo `email` con formato inválido -> `422`.
 - Campo `documento` excede longitud máxima -> `422`.
+- Enviar `password` menor a 6 caracteres -> `422`.
 
 ---
 
@@ -98,13 +93,14 @@ de super administrador de la empresa base pueden operar este módulo.
 ## 6. Scope
 
 **DENTRO:**
-- CRUD completo de administradores por empresa: listar (con búsqueda por nombre/email), crear (nuevo o promocionar empleado existente), actualizar (sin email), eliminar (cascada: pivote + user_roles + empleado + usuario).
-- Validaciones de negocio: mínimo 1 admin, no duplicados, no admin multi-empresa, email único global.
+- CRUD completo de administradores por empresa: listar (con búsqueda por nombre/email), crear como nuevo usuario, actualizar (sin email), eliminar (cascada: pivote + user_roles + empleado + usuario).
+- Validaciones de negocio: mínimo 1 admin, email único global.
 - Endpoints REST bajo `/v2/client/{companyId}/admins`.
 - Sub-módulo frontend en pantalla de empresa con tabla y formularios.
 - Middleware de autorización (solo super admin de empresa base).
 
 **FUERA (explícito):**
+- Promocionar un empleado existente como administrador.
 - Rediseño de la tabla `roles` o cambios en los flags `fl_administrator` / `fl_admin` (deuda técnica).
 - Modificación del flujo de creación de empresa (`CreateClientUseCase`) — se mantiene intacto.
 - Migración o sincronización con la tabla legacy `clientes_usuarios_administradores` (V1).
