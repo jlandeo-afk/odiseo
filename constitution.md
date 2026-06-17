@@ -133,8 +133,7 @@ npx playwright test --ui
 ### 3.6 Seguridad
 
 - Parameter binding siempre (nunca interpolar strings en SQL)
-- Soft delete (`deleted_at`) por defecto
-- `ON DELETE RESTRICT` por defecto; `CASCADE` solo documentado y justificado
+- Soft delete (`deleted_at`, `deleted_by`) siempre, y en tablas que contengan `fl_status` se actualiza el `fl_status` a `false`
 - Secrets fuera del repositorio (variables de entorno)
 
 > 📎 ADR-007, ADR-011, ADR-012, ADR-013
