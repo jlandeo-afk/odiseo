@@ -264,6 +264,7 @@ src/modules/{modulo}/
 | Typescript | Uso estricto de typescript <setup lang="ts">....</setup> |
 | Dialogos | Siempre debe tener el boton X de cerrar y en actions boton de cerrar, boton guardar u otras acciones en primary flat |
 | useTableData | Al usar este composable solo y estrictamente debes pasar un solo parametro, tener en cuenta para crear los servicios list |
+| Deloy | Cada vez que se acabe una implementación ejecutar npm run build:icons para actualizar la lista de iconos |
 
 ### 4.11 Base de datos — Naming y estructura
 
