@@ -96,7 +96,9 @@ Plataforma integral de gestión educativa (LMS) para instituciones de formación
 | Domain (Unit) | **80%** |
 | Application (Unit) | **70%** |
 | Feature (HTTP) | **60%** |
+| Frontend (Unit, Vitest) | **70%** |
 | Global (Pest) | **70%** |
+| E2E (Playwright) | Smoke tests obligatorios en cada push a develop/testing |
 
 ### 3.3 Ejecución de tests
 
@@ -106,7 +108,11 @@ php vendor/bin/pest --parallel
 php vendor/bin/pest --parallel --coverage --min=70
 php vendor/bin/pest --testsuite="Context Admin"
 
-# Frontend (Playwright)
+# Frontend unit tests (Vitest)
+pnpm vitest run
+pnpm vitest run --coverage
+
+# E2E (Playwright) — en repo playqa
 npx playwright test --project=api
 npx playwright test --project=ui
 npx playwright test --ui
@@ -428,6 +434,9 @@ src/modules/{modulo}/
 - ✅ `story('CP_XXXX_0000')` para trazabilidad de tests (Allure)
 - ✅ `beforeEach` para mocks compartidos en tests
 - ✅ Estrategia de test en 4 fases por módulo: Smoke → CRUD → Negativos → E2E
+- ✅ `test-cases.md` con dos secciones: Unit Tests (backend Pest + frontend Vitest) y BDD Scenarios (Gherkin para QA manual y Playwright E2E)
+- ✅ Escenarios BDD en formato Gherkin Given/When/Then, uno por cada criterio de aceptación + casos borde, con datos concretos y resultado observable
+- ✅ Tests unitarios de frontend (Vitest) para servicios HTTP, componentes, diálogos y modelos por cada nuevo módulo
 - ✅ 1 archivo de servicio HTTP por módulo frontend (singleton)
 - ✅ Uso estricto de Typescript en la medida no usar any a menos que sea requerido
 - ✅ En su mayoría importar componentes lazy, no importar directamente en el frontend con `import xxx from '../components/...'`
@@ -512,6 +521,7 @@ src/modules/{modulo}/
 | Fecha | Autor | Cambio | Justificación |
 |-------|-------|--------|---------------|
 | 2026-06-15 | Equipo Lumeria | Versión 1.0 | Constitución inicial basada en convenciones existentes del proyecto |
+| 2026-06-17 | Equipo Lumeria | v1.1 — Estructura dual de test-cases.md y cobertura frontend/Vitest | Formaliza formato QA (unit + BDD) y agrega métricas de frontend y E2E |
 
 ---
 
