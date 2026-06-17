@@ -263,6 +263,7 @@ src/modules/{modulo}/
 | Uso de VFORM | Todo formulario debe estar correctamente validadó desde frontend con las reglas de negocio |
 | Typescript | Uso estricto de typescript <setup lang="ts">....</setup> |
 | Dialogos | Siempre debe tener el boton X de cerrar y en actions boton de cerrar, boton guardar u otras acciones en primary flat |
+| useTableData | Al usar este composable solo y estrictamente debes pasar un solo parametro, tener en cuenta para crear los servicios list |
 
 ### 4.11 Base de datos — Naming y estructura
 
@@ -443,6 +444,7 @@ src/modules/{modulo}/
 - ✅ Retornar DTOs planos (y no Entidades) en repositorios/query builders de lectura para evitar errores de tipo y acoplamiento innecesaria.
 - ✅ Usar Query Builder de Laravel para consultas y listados simples, reservando las funciones PostgreSQL (`fn_`) únicamente para lógica compleja.
 - ✅ Consultar y verificar el esquema real de la base de datos (archivos de migración existentes o estructura física) antes de escribir consultas. Confirmar siempre los nombres reales de las columnas (ej. comprobar si el estado es `fl_status` o `fl_active`).
+- ✅ Al usar useTableData esto debe hacer uso de servicios que solo tengan declarado un parametro de cualquier tipo object, int, string pero un solo parametro
 
 ### 7.2 ASK FIRST — Preguntar antes
 
@@ -480,6 +482,7 @@ src/modules/{modulo}/
 - ❌ Escribir código en `src/` sin una prueba que falle primero (TDD)
 - ❌ Adivinar, suponer o generalizar nombres de columnas o de tablas en base de datos.
 - ❌ Confiar de forma exclusiva en mocks para dar por correctas las consultas a base de datos en tests de integración. Los mocks ocultan errores de sintaxis y columnas inexistentes.
+- ❌ Al usar useTableData no usar servicios declarados con mas de una parametro
 ---
 
 ## Artículo VIII — Enmiendas
