@@ -87,7 +87,7 @@ Plataforma integral de gestión educativa (LMS) para instituciones de formación
 | PHP | `declare(strict_types=1)` en TODO archivo `.php` |
 | PHPStan | Nivel 5 (`phpstan.neon` + `phpstan.src.neon`) |
 | TypeScript | `strict: true` en archivos nuevos |
-| Frontend | ESLint + Prettier |
+| Frontend | ESLint + Prettier + Typescript |
 
 ### 3.2 Cobertura de tests
 
@@ -252,6 +252,10 @@ src/modules/{modulo}/
 | Routing lazy-loaded | `() => import(...)`, file-based via `unplugin-vue-router` |
 | `useTableData` singleton | Paginación unificada (items, isLoading, total, perPage) |
 | Selectores para tests | Elementos semánticos (Role, Label, Placeholder); NUNCA IDs de Vuetify |
+| UI / UX | No debe existir inputs sin su placeholder bien definido y sus reglas de validación |
+| UI / UX | Si hay inputs con validaciones como tamaño de caracteres minimos o maximo usar los atributos count, max |
+| Uso de VFORM | Todo formulario debe estar correctamente validadó desde frontend con las reglas de negocio |
+| Typescript | Uso estricto de typescript <setup lang="ts">....</setup> |
 
 ### 4.11 Base de datos — Naming y estructura
 
@@ -421,6 +425,7 @@ src/modules/{modulo}/
 - ✅ `beforeEach` para mocks compartidos en tests
 - ✅ Estrategia de test en 4 fases por módulo: Smoke → CRUD → Negativos → E2E
 - ✅ 1 archivo de servicio HTTP por módulo frontend (singleton)
+- ✅ Uso estricto de Typescript en la medida no usar any a menos que sea requerido
 
 ### 7.2 ASK FIRST — Preguntar antes
 
