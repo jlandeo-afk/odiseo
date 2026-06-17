@@ -427,6 +427,7 @@ src/modules/{modulo}/
 - ✅ Estrategia de test en 4 fases por módulo: Smoke → CRUD → Negativos → E2E
 - ✅ 1 archivo de servicio HTTP por módulo frontend (singleton)
 - ✅ Uso estricto de Typescript en la medida no usar any a menos que sea requerido
+- ✅ En su mayoría importar componentes lazy, no importar directamente en el frontend con `import xxx from '../components/...'`
 
 ### 7.2 ASK FIRST — Preguntar antes
 
