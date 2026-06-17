@@ -269,6 +269,10 @@ src/modules/{modulo}/
 
 ### 4.12 Funciones PL/pgSQL — Verbos estrictos
 
+- **Criterio de Uso:**
+  - **Query Builder de Laravel:** Usar el Query Builder de Laravel (`ConnectionBuilder::read()` / `ConnectionBuilder::write()`) en la capa de Infraestructura para consultas, listados y operaciones **simples**. Evita introducir complejidad innecesaria.
+  - **Funciones PostgreSQL (`fn_`):** Diseñar e implementar funciones PL/pgSQL **únicamente** cuando la consulta o lógica sea **compleja** (múltiples uniones condicionales, cálculos recursivos, procesamiento masivo en base de datos).
+
 | Categoría | Verbos | Volatilidad |
 |-----------|--------|:-----------:|
 | Read (1 fila) | `get` | `STABLE` |
@@ -342,9 +346,8 @@ src/modules/{modulo}/
 
 ### 5.4 Migraciones
 
-- Formato timestamp: `YYYY_MM_DD_HHMMSS_<descripcion>.php`
-- `down()` **debe ser reversible** siempre
-- Funciones: `up()` llama a `down()` primero (idempotencia); SQL en archivo `.sql` separado
+- **Estructura SQL:** Los archivos `.sql` son **exclusivamente** para definir funciones/procedimientos de base de datos (PL/pgSQL), y deben estar organizados en la estructura de carpetas: `database/migrations/functions/{nombre_de_la_funcion}/{nombre_de_la_funcion}.sql` (o `triggers/` si corresponde).
+- Funciones: `up()` llama a `down()` primero (idempotencia); SQL en archivo `.sql` separado.
 - 1 carpeta = 1 artefacto (tabla, función, vista, trigger)
 - 1 PR = 1 migración
 - Tablas grandes: **NUNCA `ALTER TYPE`** en tablas >1M filas
@@ -421,6 +424,9 @@ src/modules/{modulo}/
 - ✅ `beforeEach` para mocks compartidos en tests
 - ✅ Estrategia de test en 4 fases por módulo: Smoke → CRUD → Negativos → E2E
 - ✅ 1 archivo de servicio HTTP por módulo frontend (singleton)
+- ✅ Retornar DTOs planos (y no Entidades) en repositorios/query builders de lectura para evitar errores de tipo y acoplamiento innecesaria.
+- ✅ Usar Query Builder de Laravel para consultas y listados simples, reservando las funciones PostgreSQL (`fn_`) únicamente para lógica compleja.
+- ✅ Consultar y verificar el esquema real de la base de datos (archivos de migración existentes o estructura física) antes de escribir consultas. Confirmar siempre los nombres reales de las columnas (ej. comprobar si el estado es `fl_status` o `fl_active`).
 
 ### 7.2 ASK FIRST — Preguntar antes
 
@@ -456,7 +462,8 @@ src/modules/{modulo}/
 - ❌ Generar o modificar esta constitución usando IA (§10.9)
 - ❌ Enmendar la constitución desde una rama de feature
 - ❌ Escribir código en `src/` sin una prueba que falle primero (TDD)
-
+- ❌ Adivinar, suponer o generalizar nombres de columnas o de tablas en base de datos.
+- ❌ Confiar de forma exclusiva en mocks para dar por correctas las consultas a base de datos en tests de integración. Los mocks ocultan errores de sintaxis y columnas inexistentes.
 ---
 
 ## Artículo VIII — Enmiendas
