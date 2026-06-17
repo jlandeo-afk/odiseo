@@ -87,7 +87,7 @@ Plataforma integral de gestión educativa (LMS) para instituciones de formación
 | PHP | `declare(strict_types=1)` en TODO archivo `.php` |
 | PHPStan | Nivel 5 (`phpstan.neon` + `phpstan.src.neon`) |
 | TypeScript | `strict: true` en archivos nuevos |
-| Frontend | ESLint + Prettier |
+| Frontend | ESLint + Prettier + Typescript |
 
 ### 3.2 Cobertura de tests
 
@@ -252,6 +252,11 @@ src/modules/{modulo}/
 | Routing lazy-loaded | `() => import(...)`, file-based via `unplugin-vue-router` |
 | `useTableData` singleton | Paginación unificada (items, isLoading, total, perPage) |
 | Selectores para tests | Elementos semánticos (Role, Label, Placeholder); NUNCA IDs de Vuetify |
+| UI / UX | No debe existir inputs sin su placeholder bien definido y sus reglas de validación |
+| UI / UX | Si hay inputs con validaciones como tamaño de caracteres minimos o maximo usar los atributos count, max |
+| Uso de VFORM | Todo formulario debe estar correctamente validadó desde frontend con las reglas de negocio |
+| Typescript | Uso estricto de typescript <setup lang="ts">....</setup> |
+| Dialogos | Siempre debe tener el boton X de cerrar y en actions boton de cerrar, boton guardar u otras acciones en primary flat |
 
 ### 4.11 Base de datos — Naming y estructura
 
@@ -424,6 +429,8 @@ src/modules/{modulo}/
 - ✅ `beforeEach` para mocks compartidos en tests
 - ✅ Estrategia de test en 4 fases por módulo: Smoke → CRUD → Negativos → E2E
 - ✅ 1 archivo de servicio HTTP por módulo frontend (singleton)
+- ✅ Uso estricto de Typescript en la medida no usar any a menos que sea requerido
+- ✅ En su mayoría importar componentes lazy, no importar directamente en el frontend con `import xxx from '../components/...'`
 - ✅ Retornar DTOs planos (y no Entidades) en repositorios/query builders de lectura para evitar errores de tipo y acoplamiento innecesaria.
 - ✅ Usar Query Builder de Laravel para consultas y listados simples, reservando las funciones PostgreSQL (`fn_`) únicamente para lógica compleja.
 - ✅ Consultar y verificar el esquema real de la base de datos (archivos de migración existentes o estructura física) antes de escribir consultas. Confirmar siempre los nombres reales de las columnas (ej. comprobar si el estado es `fl_status` o `fl_active`).
