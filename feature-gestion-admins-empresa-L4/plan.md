@@ -70,6 +70,13 @@ DELETE /v2/client/{companyId}/admins/{id}  → DeleteAdminUseCase
 | `src/modules/company/pages/company.page.vue` | Agregar botón/sección "Administradores" que abre el sub-módulo |
 | `src/modules/company/routes.ts` | Sin cambios (el sub-módulo se accede dentro de la página de empresa, no como ruta independiente) |
 
+**Reglas de frontend aplicables (Art. IV 4.10 constitución):**
+- TypeScript estricto: todos los componentes nuevos usan `<script setup lang="ts">`, sin `any` (Art. VII 7.1).
+- VFORM: el formulario del diálogo usa `v-form` con reglas de validación explícitas.
+- Diálogos: botón X de cerrar, botón "Cerrar" en actions, botón "Guardar" primary flat.
+- Inputs: placeholder definido en cada campo, atributos `count`/`max` donde aplique validación de longitud.
+- Lazy imports: componentes importados con `() => import(...)`.
+
 ---
 
 ## 3. Decisiones de arquitectura (mini-ADR)
@@ -148,5 +155,7 @@ DELETE /v2/client/{companyId}/admins/{id}  → DeleteAdminUseCase
 
 - **Convenciones**: todas las clases `final readonly`, DTOs con sufijos `RequestDto`/`ResponseDto`, Use Cases con único método `execute()`, validadores en `Domain/Validators/` con implementación en `Infrastructure`.
 - **Paginación**: misma estructura que el módulo `Client`: `page`, `perPage` (default 10), respuesta con `data`, `total`, `current_page`, `last_page`.
-- **Frontend — Vuetify**: tabla con `v-data-table`, diálogo con `v-dialog` + `v-form`, alerts con SweetAlert singleton.
-- **Tests**: se detallan en `test-cases.md`. La estrategia sigue las 4 fases por módulo: Smoke → CRUD → Negativos → E2E (Art. VII 7.1).
+- **Persistencia**: consultas simples con Query Builder de Laravel (`ConnectionBuilder::read()` / `ConnectionBuilder::write()`); no se crean funciones PL/pgSQL para queries de este módulo (Art. IV 4.12). Los repositorios de lectura retornan DTOs planos, nunca Entities (Art. VII 7.1).
+- **Verificación de esquema**: antes de escribir queries, se verifican los nombres reales de columnas en las migraciones existentes (`company_user_admin`, `employees`, `users`). No se asumen nombres de columnas (Art. VII 7.3).
+- **Frontend — Vuetify**: tabla con `v-data-table`, diálogo con `v-dialog` + `v-form` (validación VFORM obligatoria), alerts con SweetAlert singleton.
+- **Tests**: se detallan en `test-cases.md`. La estrategia sigue las 4 fases por módulo: Smoke → CRUD → Negativos → E2E (Art. VII 7.1). Los tests de integración validan contra base de datos real; no se confía exclusivamente en mocks para validar consultas (Art. VII 7.3).
