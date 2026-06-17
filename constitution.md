@@ -256,6 +256,7 @@ src/modules/{modulo}/
 | UI / UX | Si hay inputs con validaciones como tamaño de caracteres minimos o maximo usar los atributos count, max |
 | Uso de VFORM | Todo formulario debe estar correctamente validadó desde frontend con las reglas de negocio |
 | Typescript | Uso estricto de typescript <setup lang="ts">....</setup> |
+| Dialogos | Siempre debe tener el boton X de cerrar y en actions boton de cerrar, boton guardar u otras acciones en primary flat |
 
 ### 4.11 Base de datos — Naming y estructura
 
