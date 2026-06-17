@@ -5,8 +5,10 @@
 Se diseñan 17 casos de prueba que cubren los 12 criterios de aceptación del spec más
 los casos borde y requisitos no funcionales. Se incluyen 6 casos felices, 7 casos de
 error y 4 casos borde. Los datos son concretos y trazables a cada AC. Las pruebas se
-implementarán con Pest/PHPUnit para backend y Vitest para frontend, siguiendo la
-estrategia de 4 fases: Smoke → CRUD → Negativos → E2E.
+implementarán con Pest/PHPUnit para backend y Vitest para frontend. Siguiendo la
+estrategia de 4 fases (Smoke → CRUD → Negativos → E2E), los tests de integración
+(Feature HTTP) validan las consultas contra base de datos real; no se delega la
+corrección de queries exclusivamente a mocks (Art. VII 7.3 de la constitución).
 
 ---
 
