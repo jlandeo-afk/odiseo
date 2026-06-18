@@ -1,0 +1,48 @@
+'Modulo 1: Seguridad, Configuración y Sistema (Infraestructura Base)':
+  Autenticación, Sesiones y Permisos (Spatie):
+    users:
+      desc: Credenciales principales de acceso al sistema.
+      cols: id:serial,uuid:uuid,user:varchar,email:email_citext,password:varchar,fl_password_confirmed:bool,email_verified_at:timestamp,api_token:varchar,fl_status:bool,status_session:int,last_login:timestamp,image:varchar,company_id:int,token_nq:text,fl_suspended:bool
+    roles:
+      desc: Definición de roles y acciones permitidas.
+      cols: id:serial,name:varchar,slug:varchar,description:text,fl_status:bool,fl_admin:bool,fl_administrator:bool,company_id:int
+    permissions:
+      desc: Definición de roles y acciones permitidas.
+      cols: id:serial,name:varchar,fl_status:bool,module:varchar,fl_administrator:bool,fl_to_use_client:bool
+    users_roles:
+      desc: Tablas pivot para enlazar usuarios con roles y roles con permisos.
+      cols: id:serial,user_id:int,rol_id:int,rol_parent_id:int,fl_status:bool,company_id:int
+    roles_permissions:
+      desc: Tablas pivot para enlazar usuarios con roles y roles con permisos.
+      cols: id:serial,rol_id:int,permission_id:int,fl_status:bool,company_id:int
+    personal_access_tokens:
+      desc: Emisión de tokens para consumo de API.
+      cols: id:serial,tokenable_type:varchar,tokenable_id:int,name:varchar,token:text,abilities:text,last_used_at:timestamp,expires_at:timestamp,revoked:bool
+    remembered_sessions:
+      desc: Registro de sesiones activas, IPs y dispositivos.
+      cols: id:serial,user_id:int,remember_token:varchar,expires_at:timestamp,device_info:varchar,ip_address:inet
+  Geolocalización (Ubigeo):
+    region:
+      desc: Tablas jerárquicas estándar para ubicaciones físicas.
+      cols: id:serial,name:varchar,fl_status:bool
+    provinces:
+      desc: Tablas jerárquicas estándar para ubicaciones físicas.
+      cols: id:serial,name:varchar,region_id:int
+    districts:
+      desc: Tablas jerárquicas estándar para ubicaciones físicas.
+      cols: id:serial,name:varchar,region_id:int,province_id:int
+  Configuraciones Globales:
+    advanced_settings:
+      desc: Parámetros de negocio (límites de preguntas, tolerancias de fechas) funcionales
+        actualmente para la empresa base.
+      cols: id:serial,company_id:int,similarity_percentage:numeric,days_deadline:int,hour_deadline:time,fl_status:bool,block_assigned_questions:int,block_assigned_questions_didi:int,limit_lower_question:int,limit_upper_question:int,cut_off_date:int,limit_assigned_questions_didi:int,limit_months_questions:int,fl_include_numbering:bool,number_years_to_consider_question_repeated:int,fl_show_cycle_code_in_course_name_in_ballot:bool,amount_questions_alternatives:int,limit_questions_to_change:int
+    configuration_alternative:
+      desc: Definición de estilos, uso de imágenes y visualización por defecto de
+        las alternativas.
+      cols: id:serial,name:varchar,columns:int,styles:text,fl_image:bool,fl_default:bool,fl_status:bool,company_id:int
+    institution_types:
+      desc: Catálogos de tipos de instituciones y documentos de identidad.
+      cols: id:serial,code:varchar,name:varchar,fl_active:bool
+    type_documents:
+      desc: Catálogos de tipos de instituciones y documentos de identidad.
+      cols: id:serial,name:varchar,description:varchar

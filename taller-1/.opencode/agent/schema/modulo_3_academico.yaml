@@ -1,0 +1,127 @@
+'Modulo 3: Planificación Académica y Sílabo':
+  Malla Curricular Base:
+    course:
+      desc: Catálogo de cursos reales y sus agrupadores/alias.
+      cols: id:serial,code:varchar,name:varchar,fl_status:bool,area_id:int,fl_pseudo_course:bool,apply_text:bool,alias_nq:varchar,agreement_url:varchar,agreement_file_name:varchar,type_text_template_id:int,show_context_nq:bool
+    pseudo_course:
+      desc: Catálogo de cursos reales y sus agrupadores/alias.
+      cols: id:serial,name:varchar,code:varchar,fl_status:bool
+    course_pseudo_course:
+      desc: Catálogo de cursos reales y sus agrupadores/alias.
+      cols: id:serial,course_id:int,pseudo_course_id:int,order:int,fl_status:bool
+    course_pseudo_courses:
+      desc: Catálogo de cursos reales y sus agrupadores/alias.
+      cols: id:serial,pseudo_course_id:int,course_id:int,order:int,fl_status:bool
+    topic:
+      desc: Ramificación temática estándar.
+      cols: id:serial,code:varchar,name:varchar,course_id:int,fl_status:bool
+    subtopic:
+      desc: Ramificación temática estándar.
+      cols: id:serial,code:varchar,name:varchar,topic_id:int,fl_status:bool
+    level:
+      desc: Niveles de dificultad jerarquizados por curso.
+      cols: No encontrada en SQL
+    course_level:
+      desc: Niveles de dificultad jerarquizados por curso.
+      cols: id:serial,code:varchar,level_id:int,course_id:int,fl_status:bool,course_level_nq:bool
+    course_assigned_categories:
+      desc: Configuraciones de categorización que aplican directamente a nivel del
+        curso.
+      cols: id:serial,course_id:int,type_text_id:int
+    course_assigned_subcategories:
+      desc: Configuraciones de categorización que aplican directamente a nivel del
+        curso.
+      cols: id:serial,course_assigned_category_id:int,subcategory_id:int
+    course_text_category_settings:
+      desc: Configuraciones de categorización que aplican directamente a nivel del
+        curso.
+      cols: id:serial,course_id:int,type_text_id:int,fl_show_in_material_without_solution:bool,fl_show_in_material_with_solution:bool
+    network_course_topic_subtopic:
+      desc: Enlaces de red entre cursos y temas.
+      cols: id:serial,uuid:uuid,course_id:int,topic_id:int,subtopic_id:int,new_name_topic:varchar,last_name_topic:varchar,new_name_subtopic:varchar,last_name_subtopic:varchar
+  Manejo del Tiempo y Ciclos:
+    cycle:
+      desc: Ciclos comerciales y su tipología (anual, semestral, repaso).
+      cols: No encontrada en SQL
+    cycle_types:
+      desc: Ciclos comerciales y su tipología (anual, semestral, repaso).
+      cols: id:serial,name:varchar,fl_status:bool
+    week:
+      desc: Catálogos de tiempo.
+      cols: id:serial,description:varchar,fl_status:bool
+    type_week:
+      desc: Catálogos de tiempo.
+      cols: id:serial,description:varchar,fl_status:bool,color:varchar
+    periodicity:
+      desc: Catálogos de tiempo.
+      cols: id:serial,name:varchar,fl_status:bool,quantity:int
+    cycle_weeks:
+      desc: Fechas exactas de las semanas del ciclo. Para mantener una alineación
+        perfecta con el frontend visual, la lógica de negocio conserva aquí las semanas
+        "inactivas" como registros existentes y válidos (con sus respectivos identificadores),
+        permitiendo recorrerlas sin que rompan la interfaz.
+      cols: id:serial,week:int,type_week_id:int,cycle_id:int,start_date:date,end_date:date,fl_status:bool
+  Estructura del Sílabo (Core de Planificación):
+    syllabus:
+      desc: Cabecera principal del sílabo.
+      cols: id:serial,university_id:int,course_id:int,cycle_id:int,fl_status:bool,pseudo_course_id:int,is_disabled:bool,is_deleteable:bool,company_id:int
+    syllabus_template:
+      desc: Plantillas reutilizables para armar sílabos rápidos.
+      cols: id:serial,university_id:int,course_id:int,fl_status:bool,pseudo_course_id:int,company_id:int
+    syllabus_template_topic:
+      desc: Plantillas reutilizables para armar sílabos rápidos.
+      cols: id:serial,syllabus_template_id:int,topic_id:int,fl_status:bool,company_id:int
+    syllabus_template_topic_subtopic:
+      desc: Plantillas reutilizables para armar sílabos rápidos.
+      cols: id:serial,syllabus_template_topic_id:int,subtopic_id:int,fl_status:bool,company_id:int
+    syllabus_topic:
+      desc: Asignación granular de subtemas y materiales específicos a semanas exactas.
+      cols: id:serial,syllabus_id:int,topic_id:int,fl_status:bool,is_topic_deleted:bool,company_id:int
+    syllabus_topic_week:
+      desc: Asignación granular de subtemas y materiales específicos a semanas exactas.
+      cols: id:serial,syllabus_topic_id:int,week:int,total_questions_amount:int,fl_status:bool,company_id:int
+    syllabus_detail_subtopic:
+      desc: Asignación granular de subtemas y materiales específicos a semanas exactas.
+      cols: id:serial,syllabus_topic_week_id:int,subtopic_id:int,questions_amount:int,fl_status:bool,is_topic_modified:bool,is_subtopic_deleted:bool,company_id:int
+    syllabus_subtopic_type_material:
+      desc: Asignación granular de subtemas y materiales específicos a semanas exactas.
+      cols: id:serial,syllabus_detail_subtopic_id:int,type_material_id:int,questions_amount:int,fl_status:bool,company_id:int
+    syllabus_text_weeks:
+      desc: La variante del sílabo exclusiva para cursos basados en textos de comprensión
+        lectora.
+      cols: id:serial,syllabus_id:int,week:int,fl_status:bool,company_id:int
+    syllabus_text_distributions:
+      desc: La variante del sílabo exclusiva para cursos basados en textos de comprensión
+        lectora.
+      cols: id:serial,syllabus_text_week_id:int,type_material_id:int,distribution_type:varchar,fl_status:bool,company_id:int
+    syllabus_texts:
+      desc: La variante del sílabo exclusiva para cursos basados en textos de comprensión
+        lectora.
+      cols: id:serial,syllabus_text_distribution_id:int,type_text_id:int,type_text_subcategory_id:int,position:int,fl_status:bool,company_id:int
+    syllabus_text_content:
+      desc: La variante del sílabo exclusiva para cursos basados en textos de comprensión
+        lectora.
+      cols: id:serial,syllabus_text_id:int,subtopic_id:int,quantity:int,fl_status:bool,company_id:int
+    syllabus_text_detail:
+      desc: La variante del sílabo exclusiva para cursos basados en textos de comprensión
+        lectora.
+      cols: id:serial,syllabus_text_id:int,style_type:varchar,quantity:int
+    syllabus_type_text:
+      desc: La variante del sílabo exclusiva para cursos basados en textos de comprensión
+        lectora.
+      cols: id:serial,type_text_id:int,syllabus_id:int,week:int,quantity:int,fl_status:bool
+    syllabus_week_titles:
+      desc: Títulos personalizados para semanas específicas.
+      cols: id:serial,syllabus_id:int,title:varchar,week:int,fl_status:bool,company_id:int
+    level_syllabus:
+      desc: El sílabo independiente que rige por el nivel de dificultad.
+      cols: id:serial,headquarter_id:int,fl_status:bool,course_id:int,cycle_id:int,university_id:int,company_id:int
+    level_syllabus_weeks:
+      desc: El sílabo independiente que rige por el nivel de dificultad.
+      cols: id:serial,level_syllabus_id:int,week:int,fl_status:bool,company_id:int
+    detail_level_syllabus_weeks:
+      desc: El sílabo independiente que rige por el nivel de dificultad.
+      cols: id:serial,level_syllabus_weeks_id:int,type_material_id:int,level_id:int,type_question:varchar,number_questions:int,fl_status:bool,company_id:int
+    detail_level_syllabus_weeks_parents:
+      desc: El sílabo independiente que rige por el nivel de dificultad.
+      cols: id:serial,level_syllabus_weeks_id:int,level_id:int,number_of_passages:int,fl_status:bool,type_material_id:int,company_id:int

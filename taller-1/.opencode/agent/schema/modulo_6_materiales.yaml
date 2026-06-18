@@ -1,0 +1,191 @@
+'Modulo 6: Generación de Materiales, Exámenes y Balotarios':
+  Plantillas y Configuraciones Estructurales:
+    type_material:
+      desc: Reglas base (clase, examen, simulacro).
+      cols: id:serial,description:varchar,fl_status:bool,code:varchar,amount_question:int,fl_exam:bool,type_material_template_id:int,fl_class_material:bool,thread:int,percentage:numeric,parent_id:int,level_order:bool,company_id:int,position:int,order_date:timestamp,cycle_id:int
+    type_material_bound:
+      desc: Reglas base (clase, examen, simulacro).
+      cols: id:serial,fl_status:bool,type_material_template_id:int,type_material_template_extra_id:int
+    type_material_periodicity:
+      desc: Reglas base (clase, examen, simulacro).
+      cols: id:serial,type_material_id:int,periodicity_id:int,quantity_week:int,start_week:int,group_previous_week:bool,group_remaining_week:bool,fl_status:bool,company_id:int
+    type_material_template:
+      desc: Plantillas maestras de documentos.
+      cols: id:serial,name:varchar,fl_status:bool,fl_exam:bool,type_exam_id:int,fl_use_syllabus_exam:bool,fl_revision:bool,has_config_column:bool
+    type_templates:
+      desc: Plantillas maestras de documentos.
+      cols: id:serial,name:varchar,default:bool,company_id:int
+    type_archive:
+      desc: Plantillas maestras de documentos.
+      cols: id:serial,name:varchar,extension:varchar,fl_status:bool
+    type_exams:
+      desc: Plantillas maestras de documentos.
+      cols: id:serial,name:varchar
+    type_material_template_configuration_columns:
+      desc: Cuántas columnas lleva el PDF final.
+      cols: id:serial,type_material_template_id:int,type_solution:varchar,number_columns:int
+    material_column_configurations:
+      desc: Cuántas columnas lleva el PDF final.
+      cols: id:serial,material_configuration_id:int,course_id:int,topic_id:int,column_count:int,column_width:numeric,column_spacing:numeric,layout_format:varchar,number_format:varchar,fl_status:bool
+    template_type_material_configurations:
+      desc: Orden visual de los cursos en el entregable.
+      cols: id:serial,type_material_template_id:int,exam_area_id:int,company_id:int,fl_status:bool,type_template_id:int
+    template_type_material_courses_order:
+      desc: Orden visual de los cursos en el entregable.
+      cols: id:serial,template_type_material_id:int,course_id:int,position:int,university_id:int
+    material_configurations:
+      desc: Parámetros dinámicos para los encabezados.
+      cols: id:serial,company_id:int,category:varchar,element:varchar,fl_status:bool,is_global:bool
+    material_configuration_details:
+      desc: Parámetros dinámicos para los encabezados.
+      cols: id:serial,material_configuration_id:int,name:varchar,value:varchar,fl_status:bool
+    material_configuration_detail_value:
+      desc: Parámetros dinámicos para los encabezados.
+      cols: id:serial,material_configuration_detail_id:int,template_type_material_configuration_id:int,value:text,fl_status:bool
+    type_material_area:
+      desc: Definición de cantidad de textos y preguntas exactas por curso en un tipo
+        de material.
+      cols: id:serial,fl_status:bool,type_material_id:int,area_id:int
+    type_material_course:
+      desc: Definición de cantidad de textos y preguntas exactas por curso en un tipo
+        de material.
+      cols: id:serial,course_id:int,type_material_id:int,amount_question:int,fl_status:bool,amount_text:int,amount_subquestion:int,is_generic:bool,is_generic_text:bool
+    type_material_area_courses:
+      desc: Definición de cantidad de textos y preguntas exactas por curso en un tipo
+        de material.
+      cols: id:serial,type_material_course_id:int,type_material_area_id:int,fl_status:bool
+    type_material_detail_template:
+      desc: Definición de cantidad de textos y preguntas exactas por curso en un tipo
+        de material.
+      cols: id:serial,type_material_id:int,week:int,fl_status:bool
+    type_material_detail_courses:
+      desc: Definición de cantidad de textos y preguntas exactas por curso en un tipo
+        de material.
+      cols: id:serial,type_material_detail_template_id:int,type_material_course_id:int,course_id:int,amount_question:int,fl_status:bool
+    type_material_detail_course_texts:
+      desc: Definición de cantidad de textos y preguntas exactas por curso en un tipo
+        de material.
+      cols: id:serial,type_material_detail_template_id:int,type_material_course_id:int,course_id:int,amount_text:int,fl_status:bool
+    type_material_detail_text_subquestions:
+      desc: Definición de cantidad de textos y preguntas exactas por curso en un tipo
+        de material.
+      cols: id:serial,type_material_detail_course_text_id:int,subquestion_amount:int,position:int
+    type_text_exam_material_configuration:
+      desc: Configuraciones específicas de límites cuando hay textos en los materiales.
+      cols: id:serial,exam_material_config_id:int,course_id:int,area_id:int,type_text_level_id:int,text_amount:int
+    type_text_material_type_course:
+      desc: Configuraciones específicas de límites cuando hay textos en los materiales.
+      cols: id:serial,type_material_id:int,course_id:int,subquestion_amount:int,position:int
+    type_text_material_type_course_area:
+      desc: Configuraciones específicas de límites cuando hay textos en los materiales.
+      cols: id:serial,type_material_id:int,course_id:int,exam_area_id:int,subquestion_amount:int,position:int
+    exam_material_configurations:
+      desc: Reglas para exámenes.
+      cols: id:serial,type_material_id:int,cycle_id:int,fl_status:bool,company_id:int
+    exam_material_config_area_courses:
+      desc: Reglas para exámenes.
+      cols: id:serial,exam_material_config_id:int,course_id:int,exam_area_id:int,fl_status:bool,amount_type_d:int
+    exam_material_config_area_course_levels:
+      desc: Reglas para exámenes.
+      cols: id:serial,exam_material_config_area_course_id:int,level_id:int,amount_question:int,fl_status:bool
+  Ensamblaje Físico y Empaquetado:
+    material:
+      desc: Generación de la cabecera del material y su segregación por semanas para
+        descarga final (con y sin solución).
+      cols: id:serial,cycle_id:int,university_id:int,headquarte_id:int,headquarters_classroom_id:int,fl_status:bool,fl_verified_material_without_altern_code:bool,company_id:int
+    detail_week_type_mat:
+      desc: Generación de la cabecera del material y su segregación por semanas para
+        descarga final (con y sin solución).
+      cols: id:serial,material_id:int,week:int,type_material_id:int,url_solution:varchar,url_without_solution:varchar,fl_status:bool,parent_type_material_id:int,fl_process_status:int,fl_process_status_without:int,job_solution_id:varchar,job_without_solution_id:varchar,fl_process_class_mat:int,url_zip_class_mat:varchar,fl_config_level:bool,fl_process_quality:int,url_quality:varchar,job_quality_id:varchar,fl_process_without_quality:int,url_without_quality:varchar,job_without_quality_id:varchar,fl_complete_questions:bool,data_incomplete_questions:varchar,fl_config_type:bool,limit_lower_question:int,limit_upper_question:int,missing_config_message:varchar,data_missing_course_config:varchar,locked:bool,locked_by:int,locked_at:timestamp,questions_generation_process:varchar,data_missing_text:json,uuid:uuid
+    separated_material_week:
+      desc: Generación de la cabecera del material y su segregación por semanas para
+        descarga final (con y sin solución).
+      cols: id:serial,material_id:int,type_material_id:int,week:int,fl_solution:bool,fl_quality:bool,week_type_material_ids:varchar,course_id:int,fl_process_status:int,url_material:varchar,job_id:varchar,fl_status:bool,fl_course_active:bool
+    separated_material_exam_week:
+      desc: Generación de la cabecera del material y su segregación por semanas para
+        descarga final (con y sin solución).
+      cols: id:serial,material_id:int,material_exam_area_week_id:int,week:int,fl_solution:bool,fl_quality:bool,course_id:int,fl_process_status:int,url_material:varchar,job_id:varchar,fl_status:bool
+    material_class_week:
+      desc: Generación de la cabecera del material y su segregación por semanas para
+        descarga final (con y sin solución).
+      cols: id:serial,material_id:int,type_material_id:int,week_type_material_ids:varchar,week:int,course_id:int,fl_process_status:int,url_material_class:varchar,job_id:varchar,fl_status:bool,url_material_class_solution:varchar,fl_course_active:bool
+    exam_area:
+      desc: 'Generación estricta de exámenes segmentados por áreas de admisión (Ej:
+        Área A Ciencias, Área E Letras).'
+      cols: id:serial,description:varchar,fl_status:bool,short_description:varchar
+    material_exam_area_week:
+      desc: 'Generación estricta de exámenes segmentados por áreas de admisión (Ej:
+        Área A Ciencias, Área E Letras).'
+      cols: id:serial,week_type_material_id:int,area_id:int,url_solution:varchar,url_without_solution:varchar,fl_status:bool,fl_process_status:int,fl_process_status_without:int,job_solution_id:varchar,job_without_solution_id:varchar,fl_process_quality:int,url_quality:varchar,job_quality_id:varchar,fl_process_without_quality:int,url_without_quality:varchar,job_without_quality_id:varchar,fl_complete_questions:bool,data_incomplete_questions:varchar,fl_config_type:bool,limit_lower_question:int,limit_upper_question:int,missing_config_message:varchar,data_missing_course_config:varchar,filename:varchar,number_pages:int,has_migrated:bool
+    material_exam_parent_question:
+      desc: 'Generación estricta de exámenes segmentados por áreas de admisión (Ej:
+        Área A Ciencias, Área E Letras).'
+      cols: id:serial,material_exam_area_week_id:int,course_id:int,parent_question_id:int,subquestion:jsonb,question_history_id:int,position:int,random:bool,expected_level:int,current_level:int
+    material_exam_question:
+      desc: 'Generación estricta de exámenes segmentados por áreas de admisión (Ej:
+        Área A Ciencias, Área E Letras).'
+      cols: id:serial,course_id:int,topic_id:int,subtopic_id:int,level_id:int,question_id:int,fl_status:bool,material_exam_area_week_id:int,question_history_id:int,position:int,fl_is_manual:bool,type:varchar
+    material_ballot_question:
+      desc: Balotarios de donde los docentes pueden escoger preguntas.
+      cols: id:serial,week_type_material_id:int,course_id:int,topic_id:int,subtopic_id:int,level_id:int,type:varchar,question_id:int,fl_status:bool,question_history_id:int,position:int,random:bool,fl_is_manual:bool,parent_question_id:int,type_text_id:int,type_text_subcategory_id:int,usage_topic_id:int,usage_subtopic_id:int,material_id:int,week:int,type_material_id:int,position_initial:int,absolute_position:int,usage_level_id:int,usage_status:bool,added_in_completion:bool,removed_in_completion:bool,state:varchar,completed_subquestion:bool,expected_type:bpchar(2),entity_type:varchar
+    material_ballot_subquestions:
+      desc: Balotarios de donde los docentes pueden escoger preguntas.
+      cols: id:serial,material_ballot_question_id:int,question_id:int,position:int,state:varchar,course_id:int,topic_id:int,subtopic_id:int,fl_status:bool,fl_is_manual:bool,added_in_completion:bool
+    material_distribution_ballot_questions:
+      desc: Balotarios de donde los docentes pueden escoger preguntas.
+      cols: id:serial,material_id:int,week:int,type_material_id:int,week_type_material_id:int,course_id:int,position:int,position_initial:int,subtopic_id:int,topic_id:int,level_id:int,usage_level_id:int,question_id:int,type:varchar,usage_status:bool,fl_status:bool,absolute_position:int,added_in_completion:bool,removed_in_completion:bool,parent_question_id:int,subquestion:jsonb,type_text_id:int,type_text_subcategory_id:int,expected_type:varchar,completed_subquestion:bool,usage_topic_id:int,usage_subtopic_id:int
+  Periodos (Agrupaciones Analíticas):
+    material_per_period:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_id:int,type_material_id:int
+    material_per_period_ballot:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_per_period_id:int,start_week:int,end_week:int,fl_config_type:bool,lower_level_limit:int,upper_level_limit:int,questions_missing_url:varchar,courses_missing_url:varchar,text_missing_url:varchar,fl_missing_questions:bool,fl_missing_courses:bool,fl_missing_text:bool,date_completed:timestamp,user_completed_id:int,order_date:timestamp,order_by_user_id:int,fl_use_optional_subtopics:bool
+    material_per_period_ballot_class:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_per_period_ballot_url_id:int,course_id:int,file_name:varchar,fl_job_process:varchar,job_url:varchar,job_id:varchar
+    material_per_period_ballot_url:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_per_period_ballot_id:int,type_url:varchar,job_url:varchar,job_id:varchar,file_name:varchar,fl_job_process:varchar,retries:int,number_pages:int
+    material_per_period_course:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_per_period_ballot_id:int,course_id:int,type:varchar,url:varchar,job_id:varchar,job_status:varchar,pages:int,retries:int
+    material_per_period_exam:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_per_period_id:int,exam_area_id:int,start_week:int,end_week:int,questions_missing_url:varchar,courses_missing_url:varchar,text_missing_url:varchar
+    material_per_period_week_course:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_per_period_ballot_id:int,course_id:int,week:int,type:varchar,url:varchar,job_id:varchar,job_status:varchar
+    material_per_period_level_limit_config:
+      desc: Estructuras para sacar un compilado masivo o corte de materiales (por
+        ejemplo, "Libro del Bimestre").
+      cols: id:serial,material_per_period_id:int,start_week:int,end_week:int,lower_level_limit:int,upper_level_limit:int,fl_use_question_type:bool,fl_use_optional_subtopics:bool
+  Estadísticas Analíticas:
+    material_ballot_stats_global:
+      desc: Conteo analítico de preguntas nuevas vs repetidas en balotarios.
+      cols: id:serial,material_per_period_ballot_id:int,number_pages:int,total_questions:int,new_questions:int,repeated_year:int,repeated_history:int
+    material_ballot_stats_areas:
+      desc: Conteo analítico de preguntas nuevas vs repetidas en balotarios.
+      cols: id:serial,global_stats_id:int,area_name:varchar,total_questions:int,new_questions:int,repeated_year:int,repeated_history:int
+    material_ballot_stats_area_courses:
+      desc: Conteo analítico de preguntas nuevas vs repetidas en balotarios.
+      cols: id:serial,area_stats_id:int,course_name:varchar,total_questions:int,new_questions:int,repeated_year:int,repeated_history:int
+    material_exam_stats_global:
+      desc: Conteo analítico de efectividad de los exámenes.
+      cols: id:serial,detail_week_type_mat_id:int,number_pages:int,total_questions:int,new_questions:int,repeated_year:int,repeated_history:int,repeated_area:int,pages_details:jsonb
+    material_exam_stats_areas:
+      desc: Conteo analítico de efectividad de los exámenes.
+      cols: id:serial,material_exam_stats_global_id:int,area_name:varchar,total_questions:int,new_questions:int,repeated_year:int,repeated_history:int,repeated_area:int,question_details:jsonb,area_id:int
+    material_exam_stats_area_courses:
+      desc: Conteo analítico de efectividad de los exámenes.
+      cols: id:serial,area_stats_id:int,course_name:varchar,total_questions:int,new_questions:int,repeated_year:int,repeated_history:int,repeated_area:int,question_details:jsonb,course_id:int
+    question_excluded_material:
+      desc: Registro de preguntas que se forzaron a salir de un material.
+      cols: id:serial,material_id:int,question_id:int,excluded_at:timestamp

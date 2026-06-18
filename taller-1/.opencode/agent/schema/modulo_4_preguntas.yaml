@@ -1,0 +1,138 @@
+'Modulo 4: Banco de Preguntas y Orígenes (Core)':
+  Reactivos y Textos:
+    parent_question:
+      desc: Preguntas padre o contextos largos (textos de RV, casos clínicos).
+      cols: id:serial,code:varchar,description:text,number_question:varchar,number:varchar,course_id:int,status:varchar,fl_status:bool,university_id:int,year:varchar,option_id:int,modality_id:int,version:varchar,authorship:varchar,fl_diagrammed:bool,url_pdf:varchar,region:varchar,area:varchar,short_description:text,code_parent_uniq:text,type_text_id:int,text_traduction:text,short_text_traduction:text,description_b:text,short_description_b:text,level_id:int,type_text_subcategory_id:int,columns:int,search_text:text,priority:int
+    parent_question_correlative:
+      desc: Preguntas padre o contextos largos (textos de RV, casos clínicos).
+      cols: id:serial,course_id:int,correlative:int
+    question:
+      desc: Las preguntas individuales, hijas, o de soporte.
+      cols: id:serial,code:varchar,description:text,short_description:text,number_question:varchar,course_id:int,topic_id:int,subtopic_id:int,level_id:int,teacher_id:int,answer_id:int,type:varchar,ter:numeric,status:varchar,fl_status:bool,number:varchar,parent_id:int,year:varchar,authorship:varchar,fl_diagrammed:bool,url_pdf:varchar,region:varchar,area:varchar,config_alternative_id:int,resv_to_veri_at:timestamp,columns:int,math_migration_status:varchar,migrated_updated_at:timestamp,url_pdf_updated_at:timestamp,status_changed_at:timestamp,ia_generated:bool,priority:int,is_migrated:bool,search_text:text
+    question_correlative:
+      desc: Las preguntas individuales, hijas, o de soporte.
+      cols: id:serial,course_id:int,correlative:int,apply_text:bool
+    question_secondary:
+      desc: Las preguntas individuales, hijas, o de soporte.
+      cols: id:serial,code:varchar,question_id:int,course_id:int
+    alternative:
+      desc: Las opciones cerradas de las preguntas.
+      cols: id:serial,description:text,question_id:int,fl_status:bool,math_migration_status:varchar,migrated_updated_at:timestamp,is_migrated:bool
+  Multimedia y Fórmulas:
+    question_image:
+      desc: Imágenes estáticas incrustadas.
+      cols: id:serial,code:varchar,extension:varchar,image:text,question_id:int,fl_status:bool
+    parent_image:
+      desc: Imágenes estáticas incrustadas.
+      cols: id:serial,code:varchar,extension:varchar,image:text,parent_id:int,fl_status:bool
+    alternative_maths:
+      desc: Rutas de imágenes vectoriales o fórmulas generadas por herramientas de
+        terceros (ej. Wiris).
+      cols: id:serial,code:varchar,path:varchar,alternative_id:int,fl_status:bool,properties:json
+    question_maths:
+      desc: Rutas de imágenes vectoriales o fórmulas generadas por herramientas de
+        terceros (ej. Wiris).
+      cols: id:serial,code:varchar,path:varchar,question_id:int,fl_status:bool,properties:json
+  Taxonomía, Saberes y Atributos:
+    type_text:
+      desc: Clasificación profunda exclusiva para textos.
+      cols: id:serial,name:varchar,fl_status:bool,position:int
+    type_text_templates:
+      desc: Clasificación profunda exclusiva para textos.
+      cols: id:serial,name:varchar,description_text:varchar,description_subquestion:varchar,text_attributes:varchar,subquestion_attributes:varchar
+    type_text_subcategories:
+      desc: Clasificación profunda exclusiva para textos.
+      cols: id:serial,name:varchar,fl_status:bool
+    type_text_to_subcategory:
+      desc: Clasificación profunda exclusiva para textos.
+      cols: id:serial,type_text_id:int,type_text_subcategory_id:int,fl_status:bool
+    type_texts_subtopics:
+      desc: Clasificación profunda exclusiva para textos.
+      cols: id:serial,subtopic_id:int,type_text_id:int,probability_percentage:int,fl_status:bool
+    type_texts_topics:
+      desc: Clasificación profunda exclusiva para textos.
+      cols: id:serial,topic_id:int,type_text_id:int,fl_status:bool,probability_percentage:int
+    type_text_level:
+      desc: Clasificación profunda exclusiva para textos.
+      cols: id:serial,level:int,description:varchar
+    question_attributes:
+      desc: Sistema de metadatos llave-valor (dificultad, etiquetas).
+      cols: id:serial,question_attributes_type_id:int,question_id:int,value:varchar
+    question_attributes_type:
+      desc: Sistema de metadatos llave-valor (dificultad, etiquetas).
+      cols: id:serial,name:varchar
+    question_attributes_type_course:
+      desc: Sistema de metadatos llave-valor (dificultad, etiquetas).
+      cols: id:serial,question_attributes_type_id:int,course_id:int,types_questions:varchar
+    question_attributes_types_values:
+      desc: Sistema de metadatos llave-valor (dificultad, etiquetas).
+      cols: id:serial,question_attributes_type_id:int,value:varchar,label:varchar,description:varchar
+    essential_knowledges:
+      desc: Los saberes previos (teoría) que el alumno necesita dominar antes de resolver
+        la pregunta.
+      cols: id:serial,code:varchar,name:varchar,course_id:int,topic_id:int,is_active:bool,editor_content:text,thumbnail:text
+    essential_knowledge_image:
+      desc: Los saberes previos (teoría) que el alumno necesita dominar antes de resolver
+        la pregunta.
+      cols: id:serial,essential_knowledge_id:int,image:text,extension:text
+    essential_knowledge_questions:
+      desc: Los saberes previos (teoría) que el alumno necesita dominar antes de resolver
+        la pregunta.
+      cols: id:serial,essential_knowledge_id:int,question_id:int
+    modality:
+      desc: Modalidades bajo las cuales se clasifica la evaluación.
+      cols: id:serial,name:varchar,fl_status:bool,option_ids:_int4,university_ids:_int4,fl_allows_mark_frequent_topic:bool
+    modality_options:
+      desc: Modalidades bajo las cuales se clasifica la evaluación.
+      cols: id:serial,name:varchar,option_university_id:int,fl_allows_mark_frequent_topic:bool
+    option:
+      desc: Modalidades bajo las cuales se clasifica la evaluación.
+      cols: No encontrada en SQL
+    importance_rejected:
+      desc: Tipificación para priorizar preguntas que rebotaron en QA.
+      cols: id:serial,level:int,name:varchar,fl_status:bool
+    category_rejected:
+      desc: Tipificación para priorizar preguntas que rebotaron en QA.
+      cols: id:serial,name:varchar,fl_status:bool
+    question_refuzed:
+      desc: Control de estados, observaciones de auditoría y rechazos.
+      cols: id:serial,category_rejected_id:int,importance_rejected:int,observation:text,images:text,question_id:int,fl_status:bool,fl_active:bool
+    question_observation:
+      desc: Control de estados, observaciones de auditoría y rechazos.
+      cols: id:serial,description:text,similitaries:text,question_id:int,type:varchar,fl_status:bool,boards_observation:text
+    parent_observation:
+      desc: Control de estados, observaciones de auditoría y rechazos.
+      cols: id:serial,description:text,similitaries:text,parent_id:int,type:varchar,fl_status:bool
+    question_status:
+      desc: Control de estados, observaciones de auditoría y rechazos.
+      cols: id:serial,question_id:int,status:varchar,process:varchar,description:varchar,fl_active:bool
+    question_shares:
+      desc: Tablas pivot de compartición.
+      cols: id:serial,question_id:int,code:varchar,topic_id:int,subtopic_id:int,course_id:int
+    question_subtopic:
+      desc: Tablas pivot de compartición.
+      cols: id:serial,question_id:int,subtopic_id:int,fl_status:bool
+  Orígenes e Historial de Uso (Trazabilidad):
+    origin_question:
+      desc: De qué examen de admisión, universidad, año y área se extrajo el ítem
+        original.
+      cols: id:serial,question_id:int,year:varchar,region_id:int,university_id:int,option_id:int,modality_id:int,areas:varchar,fl_status:bool,version:int,modality_option_id:int
+    origin_parent_question:
+      desc: De qué examen de admisión, universidad, año y área se extrajo el ítem
+        original.
+      cols: id:serial,parent_id:int,year:varchar,region_id:int,university_id:int,option_id:int,modality_id:int,areas:varchar,version:int,fl_status:bool,modality_option_id:int
+    question_history_cycle:
+      desc: Rastreo de en qué ciclo o examen ya se usó una pregunta, vital para evitar
+        repeticiones en la generación automática.
+      cols: id:serial,question_id:int,cycle_id:int,university_id:int,headquarters_id:int,fl_status:bool,automatic:bool,parent_question_id:int,subquestion:jsonb
+    question_history_course:
+      desc: Rastreo de en qué ciclo o examen ya se usó una pregunta, vital para evitar
+        repeticiones en la generación automática.
+      cols: id:serial,question_id:int,code:varchar,number:varchar,course_id:int
+    question_history_usage_exam_parent_question:
+      desc: Rastreo de en qué ciclo o examen ya se usó una pregunta, vital para evitar
+        repeticiones en la generación automática.
+      cols: id:serial,material_exam_area_week_id:int,course_id:int,parent_question_id:int,question_id:int,automatic:bool
+    frequent_university_subtopic:
+      desc: Estadísticas de temas que más se repiten en ciertas universidades (frecuencia).
+      cols: id:serial,university_id:int,subtopic_id:int,is_frequent:bool,method:varchar,fl_status:bool

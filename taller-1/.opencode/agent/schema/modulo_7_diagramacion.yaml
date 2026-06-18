@@ -1,0 +1,97 @@
+'Modulo 7: Diagramación (DiDi), Empleados y Revisiones':
+  Workflow de Diagramación (DiDi):
+    employee_didi_question:
+      desc: Tarea madre de digitalización asignada a un empleado y los campos específicos
+        (texto, imagen, respuesta) que debe transcribir o escanear.
+      cols: id:serial,employee_id:int,question_id:int,week:int,year:int,diagrammed:bool,fl_status:bool,theory_base:text,data_unknown:text,development
+        :text,answer:text,url_file:varchar,url_file_digitalized_solution:varchar,url_file_digitalized_images:text,url_file_digitalized_solution_updated_at:timestamp,version:int
+    employee_didi_question_field:
+      desc: Tarea madre de digitalización asignada a un empleado y los campos específicos
+        (texto, imagen, respuesta) que debe transcribir o escanear.
+      cols: id:serial,employee_didi_question_id:int,setting_diagrammed_course_id:int,value:text,fl_status:bool,migrated_updated_at:timestamp,math_migration_status:varchar,is_migrated:bool
+    employee_didi_question_field_image_active:
+      desc: Particiones de PostgreSQL que separan físicamente las imágenes aprobadas
+        y vigentes de las que ya no sirven, optimizando fuertelmente los `SELECT`.
+      cols: No encontrada en SQL
+    employee_didi_question_field_image_inactive:
+      desc: Particiones de PostgreSQL que separan físicamente las imágenes aprobadas
+        y vigentes de las que ya no sirven, optimizando fuertelmente los `SELECT`.
+      cols: No encontrada en SQL
+    employee_didi_question_image:
+      desc: Rutas de las digitalizaciones recortadas.
+      cols: id:serial,employee_didi_question_id:int,code:varchar,extension:varchar,image:text,fl_status:bool
+    didi_maths:
+      desc: Rutas de las digitalizaciones recortadas.
+      cols: id:serial,code:varchar,path:varchar,didi_question_id:int,fl_status:bool,properties:json
+    employee_question_image:
+      desc: Rutas de las digitalizaciones recortadas.
+      cols: id:serial,employee_question_id:int,code:varchar,extension:varchar,image:text,fl_status:bool
+    employee_question_maths:
+      desc: Rutas de las digitalizaciones recortadas.
+      cols: id:serial,code:varchar,path:varchar,employee_question_id:int,fl_status:bool,properties:json
+    employee_question:
+      desc: Repositorio del material resuelto o documentación de soporte.
+      cols: id:serial,teacher_id:int,question_id:int,alternative_id:int,fl_status:bool,type:varchar,document_solution:text,week:int,year:int,solved:bool,url_pdf_question_solution:varchar,board_json:text,board_refuzed:text,fl_refuzed:bool,editor_content:text,url_pdf_question_solution_updated_at:timestamp
+    employee_question_document:
+      desc: Repositorio del material resuelto o documentación de soporte.
+      cols: id:serial,employee_question_id:int,type_archive_id:int,document:text,fl_status:bool,document_refuzed:text,fl_refuzed:bool
+    course_didi_assignment_state:
+      desc: Reglas de qué cursos pasan por DiDi y qué campos son obligatorios.
+      cols: course_id:int,last_assigned_didi_index:int
+    setting_diagrammed_courses:
+      desc: Reglas de qué cursos pasan por DiDi y qué campos son obligatorios.
+      cols: id:serial,course_id:int,position:int,fl_status:bool,field_diagram_id:int,category_text_id:int,fl_active:bool,fl_optional:bool
+    field_diagrammed:
+      desc: Reglas de qué cursos pasan por DiDi y qué campos son obligatorios.
+      cols: id:serial,name:varchar,fl_status:bool,name_nq:varchar
+  Control de Calidad (Revisiones):
+    material_revisions:
+      desc: Flujo de QA donde un coordinador revisa que todo el material generado
+        esté impecable para el cliente.
+      cols: id:serial,material_id:int,type_material_id:int,start_week:int,end_week:int,delivery_date:timestamp,verify_date:timestamp,verified_by:int,status:varchar
+    material_revision_items:
+      desc: Flujo de QA donde un coordinador revisa que todo el material generado
+        esté impecable para el cliente.
+      cols: id:serial,material_revision_id:int,detail_week_type_mat_id:int
+    material_revision_courses:
+      desc: Flujo de QA donde un coordinador revisa que todo el material generado
+        esté impecable para el cliente.
+      cols: id:serial,material_revision_id:int,course_id:int,verify_date:timestamp,verified_by:int,status:varchar,amount_questions_changed:int
+    material_question_change_reason:
+      desc: Auditoría de por qué un revisor cambió la pregunta X por la Y.
+      cols: id:serial,material_revision_course_id:int,material_ballot_question_id:int,old_question_id:int,new_question_id:int,reason:text
+  Flujo de Preguntas Faltantes (Tracking):
+    material_missing_question:
+      desc: Sistema interno de tickets. Si un material se generó pero le faltan 5
+        preguntas de geometría, aquí se detecta, se detalla y se audita qué empleado
+        solucionó el faltante.
+      cols: id:serial,material_id:int,type_material_id:int,week:int,request_date:timestamp,expiration_date:timestamp,course_id:int,status:varchar
+    material_missing_question_detail:
+      desc: Sistema interno de tickets. Si un material se generó pero le faltan 5
+        preguntas de geometría, aquí se detecta, se detalla y se audita qué empleado
+        solucionó el faltante.
+      cols: id:serial,material_missing_question_id:int,material_ballot_question_id:int,question_id:int,employee_id:int,status:varchar,assignment_type:varchar
+    material_missing_question_tracking:
+      desc: Sistema interno de tickets. Si un material se generó pero le faltan 5
+        preguntas de geometría, aquí se detecta, se detalla y se audita qué empleado
+        solucionó el faltante.
+      cols: id:serial,material_missing_question_detail_id:int,employee_id:int,action:varchar,assignment_type:varchar
+  Notificaciones y Procesos en Background:
+    material_generation_notifications:
+      desc: Avisos push o webhooks de éxito/error al compilar el PDF.
+      cols: id:serial,title:varchar,message:varchar,url_internal:varchar,request_status:varchar,user_id:int,type:int,fl_status:bool,fl_read:bool,read_at:timestamp
+    material_generation_notification_types:
+      desc: Avisos push o webhooks de éxito/error al compilar el PDF.
+      cols: id:serial,name:varchar,slug:varchar
+    individual_notifications:
+      desc: Avisos push o webhooks de éxito/error al compilar el PDF.
+      cols: id:serial,title:varchar,message:varchar,url_internal:varchar,user_id:int,type:int,fl_status:bool,fl_read:bool
+    question_pdf_jobs:
+      desc: Control del worker que imprime el PDF de la pregunta.
+      cols: id:serial,question_id:int,process_type:varchar,status:varchar,job_id:varchar
+    image_gallery:
+      desc: Banco general de imágenes globales reutilizables.
+      cols: id:serial,name:varchar,image:varchar,width:int,height:int,extension:varchar,fl_status:bool,path_full_version:varchar,path_short_version:varchar
+    image_galery_topic:
+      desc: Banco general de imágenes globales reutilizables.
+      cols: id:serial,image_gallery_id:int,topic_id:int,fl_status:bool

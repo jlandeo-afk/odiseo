@@ -1,0 +1,70 @@
+'Modulo 2: Institucional, Comercial y Usuarios (Empresas y Sedes)':
+  Clientes y Negocios:
+    companies:
+      desc: Registro principal de los clientes B2B, sus dominios y datos de facturación.
+      cols: id:serial,uuid:uuid,social_reason:varchar,commercial_name:varchar,document_number:varchar,schema:varchar,address:varchar,type_institution_id:int,region_id:int,province_id:int,district_id:int,contact_email:email_citext,billing_email:email_citext,main_phone:varchar,webpage:varchar,facebook:varchar,instagram:varchar,tiktok:varchar,number_students:int,number_collaborators:int,education_level:varchar,plan:varchar,plan_start_date:date,modality_payment:varchar,fl_active:bool
+    clientes_empresas:
+      desc: Registro principal de los clientes B2B, sus dominios y datos de facturación.
+      cols: id:serial,ruc:varchar,razon_social:varchar,tipo:varchar,nombre_comercial:varchar,direccion:varchar,departamento_id:int,provincia_id:int,distrito_id:int,numero_estudiantes:int,numero_colaboradores:int,nivel_educativo:varchar,correo_contacto_principal:varchar,correo_facturacion:varchar,telefono:varchar,pagina_web:varchar,facebook:varchar,instagram:varchar,tiktok:varchar,plan_contratado:varchar,fecha_inicio:date,modalidad_pago:varchar,subdominio:varchar,estado:varchar,company_id:int
+    plans:
+      desc: Planes de suscripción, costos y límites (usuarios/preguntas) que limitan
+        a las empresas.
+      cols: No encontrada en SQL
+    company_legal_representatives:
+      desc: Datos formales para contratos B2B.
+      cols: id:serial,company_id:int,names:varchar,first_surname:varchar,second_surname:varchar,type_document_id:int,document_number:varchar,email:email_citext,phone:varchar,fl_active:bool
+  Infraestructura Física:
+    headquarters:
+      desc: Sedes físicas asociadas a cada empresa.
+      cols: id:serial,code:varchar,name:varchar,slug:varchar,fl_status:bool,address:varchar
+    company_headquarters:
+      desc: Sedes físicas asociadas a cada empresa.
+      cols: id:serial,headquarter_id:int,company_id:int
+    classroom:
+      desc: Aulas específicas distribuidas dentro de las sedes.
+      cols: id:serial,code:varchar,number:varchar,fl_status:bool
+    headquarters_classroom:
+      desc: Aulas específicas distribuidas dentro de las sedes.
+      cols: id:serial,headquarters_id:int,classroom_id:int,fl_status:bool
+  Objetivos y Prospección:
+    universities:
+      desc: Catálogo de universidades a las que apunta preparar cada empresa.
+      cols: No encontrada en SQL
+    company_universities:
+      desc: Catálogo de universidades a las que apunta preparar cada empresa.
+      cols: id:serial,company_id:int,university_id:int,fl_active:bool
+    option_university:
+      desc: Variantes o modalidades de ingreso por universidad.
+      cols: id:serial,name:varchar,university_id:int
+    origin_university:
+      desc: Variantes o modalidades de ingreso por universidad.
+      cols: id:serial,name:varchar,type:int,fl_active:bool,slug:varchar,region_id:int,areas:text,code:varchar,versions:text
+    prospect:
+      desc: Registro de prospectos comerciales y sus códigos de validación.
+      cols: id:serial,name:varchar,charge:varchar,type_company:varchar,name_institute:varchar,document_number:varchar,code_id:int,fl_validate:bool,fl_status:bool
+    code_prospect:
+      desc: Registro de prospectos comerciales y sus códigos de validación.
+      cols: id:serial,code:varchar,fl_status:bool
+  Personal Operativo y Docente:
+    employees:
+      desc: Empleados y administradores ligados a las empresas.
+      cols: id:serial,uuid:uuid,user_id:int,first_name:varchar,first_surname:varchar,second_surname:varchar,type_document_id:int,document:varchar,email:email_citext,phone:varchar,fl_status:bool,code:varchar,limit_assigned_questions:int,limit_assigned_questions_initial:int,fl_unlimit_questions:bool,charge_id:int,gpt:bool,level_id:int,goal:int,lot:int,company_id:int,limit_missing_questions:int,fl_resolve_missing_questions:bool
+    company_user_admin:
+      desc: Empleados y administradores ligados a las empresas.
+      cols: id:serial,company_id:int,employee_id:int,fl_active:bool
+    teachers:
+      desc: Extensión de empleados con parámetros de metas (`goal`), lotes (`lot`)
+        y límites de asignación de preguntas.
+      cols: id:serial,employee_id:int,code:varchar,limit_assigned_questions:int,limit_assigned_questions_initial:int,fl_unlimit_questions:bool,level_rate_id:int,goal:int,lot:int,fl_active:bool,company_id:int,limit_missing_questions:int,fl_resolve_missing_questions:bool
+    charge:
+      desc: Cargos jerárquicos del personal.
+      cols: id:serial,uuid:uuid,name:varchar,fl_status:bool
+    employee_course:
+      desc: Relación de qué docente dicta qué curso y para qué universidad.
+      cols: id:serial,teacher_id:int,course_id:int,fl_status:bool
+    employee_university:
+      desc: Relación de qué docente dicta qué curso y para qué universidad.
+      cols: employee_id:int,university_id:int,fl_status:bool,id:serial
+    level_rates:
+      desc: Costos pagados al personal por pregunta, dependiendo del nivel.
+      cols: id:serial,level_name:varchar,cost_per_question:numeric,fl_status:bool

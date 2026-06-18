@@ -1,0 +1,36 @@
+'Modulo 5: Inteligencia Artificial (Módulo IA y NQ)':
+  Generación IA:
+    question_teacher_ia:
+      desc: Contenedor del prompt, base teórica, formato y respuesta procesada por
+        IA a solicitud de un docente.
+      cols: id:serial,description:text,course_id:int,topic_id:int,subtopic_id:int,microtopic:varchar,level_id:int,answer_id:int,theoretical_basis:text,argumentation:text,file:varchar,format:varchar,type:varchar,category:varchar,subcategory:varchar,teacher_id:int,status_revised:bool,fl_parent:bool,question_ia_id:int,fl_status:bool,description_short:text,answer_description:text,version:int,chat_feedback_id:int,nq_question_key:uuid,level_old_id:int,level_description:text,content:varchar,verification_started_at:timestamp,verification_finished_at:timestamp
+    alternative_questions_ia:
+      desc: Las opciones A, B, C, D inferidas o extraídas por la IA.
+      cols: id:serial,description:text,option:varchar,question_ia_id:int,fl_status:bool
+  Multimedia IA:
+    question_ia_images:
+      desc: Recursos gráficos enlazados a flujos procesados por inteligencia artificial.
+      cols: id:serial,code:varchar,extension:varchar,image:text,question_ia_id:int,fl_status:bool
+    alternative_ia_images:
+      desc: Recursos gráficos enlazados a flujos procesados por inteligencia artificial.
+      cols: id:serial,code:varchar,extension:varchar,image:text,alternative_ia_id:int,fl_status:bool
+    solution_ia_images:
+      desc: Recursos gráficos enlazados a flujos procesados por inteligencia artificial.
+      cols: id:serial,code:varchar,extension:varchar,image:varchar,solution_ia_id:int,fl_status:bool,type_solution:varchar
+  Integración NQ:
+    nq_user_request:
+      desc: Sistema de tokens y colas de peticiones para herramientas externas de
+        normalización o consultas.
+      cols: id:serial,user_id:int,request_status:varchar
+    nq_user_token:
+      desc: Sistema de tokens y colas de peticiones para herramientas externas de
+        normalización o consultas.
+      cols: id:serial,user_id:int,nq_user:varchar,nq_token:varchar,nq_expiration_date:timestamp
+    origin_question_nq:
+      desc: Sistema de tokens y colas de peticiones para herramientas externas de
+        normalización o consultas.
+      cols: id:serial,question_ia_id:int,question_id:int,date_revised:timestamp,fl_status:bool
+    question_field_diagrammed_nq:
+      desc: Sistema de tokens y colas de peticiones para herramientas externas de
+        normalización o consultas.
+      cols: id:serial,question_teacher_ia_id:int,field_diagrammed_id:int,content:text,position:int,course_id:int
