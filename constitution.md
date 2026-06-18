@@ -265,6 +265,7 @@ src/modules/{modulo}/
 | useTableData | Al usar este composable solo y estrictamente debes pasar un solo parametro, tener en cuenta para crear los servicios list |
 | Deloy | Cada vez que se acabe una implementación ejecutar npm run build:icons para actualizar la lista de iconos |
 | objectToUrlSearchParams | Retorna un string que inicia por `/...` al usar endpoint como V2 tener en cuenta no duplicar `/` |
+| Dialogos controlados por padre | Cuando un dialogo se monta/desmonta via v-if desde el padre, usar :model-value="props.isDialogVisible" directo en VDialog y emitir update:isDialogVisible para cerrar. No usar ref interno ni watch para sincronizar visibilidad — el v-if del padre garantiza estado limpio al recrear el componente. El formData se inicializa desde props en setup.
 
 ### 4.11 Base de datos — Naming y estructura
 
