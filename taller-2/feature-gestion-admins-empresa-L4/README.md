@@ -73,33 +73,32 @@
 ### Checklist
 
 #### Completitud
-- [ ] Cada User Story tiene criterios de aceptación
-- [ ] Los criterios son medibles
-- [ ] Se cubren errores
-- [ ] Se cubren casos borde
-- [ ] Se consideran NFR relevantes
+- [x] Cada User Story tiene criterios de aceptación
+- [x] Los criterios son medibles
+- [x] Se cubren errores
+- [x] Se cubren casos borde
+- [x] Se consideran NFR relevantes
 
 #### Claridad
-- [ ] No existen términos ambiguos
-- [ ] No existen requisitos vagos
-- [ ] Los valores son específicos
-- [ ] La redacción es verificable
+- [x] No existen términos ambiguos
+- [x] No existen requisitos vagos
+- [x] Los valores son específicos
+- [x] La redacción es verificable
 
 #### Consistencia
-- [ ] Terminología consistente
-- [ ] Nombres consistentes
-- [ ] No existen contradicciones
+- [x] Terminología consistente
+- [x] Nombres consistentes
+- [x] No existen contradicciones
 
 #### Testabilidad
-- [ ] Todos los requisitos son verificables
-- [ ] Existen criterios observables
-- [ ] No existen requisitos subjetivos
+- [x] Todos los requisitos son verificables
+- [x] Existen criterios observables
+- [x] No existen requisitos subjetivos
 
 ### Observaciones
-[PENDIENTE]
+Recomendación: El spec tiene un detalle de la solución quizá un poco más técnico de lo que deberia (urls, nombre de parametros, codigos http). Y este detalle podría ser mejor colocarlo en el plan.
 
 ### Veredicto
-🟢 PASS | 🟡 PASS CON OBSERVACIONES | 🔴 FAIL
-(Marcar resultado final tras la revisión)
+🟢 todo pasa
 
-**Gate status: READY para revisión por otro grupo**
+**Gate status : Revisado**
