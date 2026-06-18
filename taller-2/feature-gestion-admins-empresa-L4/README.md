@@ -67,16 +67,39 @@
 
 ## Gate de claridad
 
-| Criterio | Estado | Evidencia |
-|----------|:------:|-----------|
-| Todos los AC tienen trazabilidad en plan §5 | ✅ | 12 ACs mapeados a Use Cases y repositorios |
-| Todos los AC tienen al menos 1 test case | ✅ | Cada AC cubierto por 1-4 tests (unit + BDD) |
-| 4 ADRs documentados en plan §3 | ✅ | Decisiones 1-4 con POR QUÉ y ALTERNATIVA DESCARTADA |
-| Plan alineado a constitution v1.1 | ✅ | Soft delete (Art. III 3.6), single-param service (Art. VII 7.1), test-cases dual (Unit+BDD) |
-| Coverage matrix completa | ✅ | Tabla AC → Spec → Plan → Tests con 22 filas |
-| Scope dentro/fuera definido | ✅ | [spec.md](./spec.md) §6 |
-| Archivos nuevos vs modificados listados | ✅ | [plan.md](./plan.md) §2 |
-| Riesgos identificados con mitigación | ✅ | [plan.md](./plan.md) §4 (6 riesgos) |
-| Dependencias externas verificadas | ✅ | [plan.md](./plan.md) §4 (10 dependencias, 0 nuevas) |
+### Revisor
+#### Equipo L2
+
+### Checklist
+
+#### Completitud
+- [ ] Cada User Story tiene criterios de aceptación
+- [ ] Los criterios son medibles
+- [ ] Se cubren errores
+- [ ] Se cubren casos borde
+- [ ] Se consideran NFR relevantes
+
+#### Claridad
+- [ ] No existen términos ambiguos
+- [ ] No existen requisitos vagos
+- [ ] Los valores son específicos
+- [ ] La redacción es verificable
+
+#### Consistencia
+- [ ] Terminología consistente
+- [ ] Nombres consistentes
+- [ ] No existen contradicciones
+
+#### Testabilidad
+- [ ] Todos los requisitos son verificables
+- [ ] Existen criterios observables
+- [ ] No existen requisitos subjetivos
+
+### Observaciones
+[PENDIENTE]
+
+### Veredicto
+🟢 PASS | 🟡 PASS CON OBSERVACIONES | 🔴 FAIL
+(Marcar resultado final tras la revisión)
 
 **Gate status: READY para revisión por otro grupo**
